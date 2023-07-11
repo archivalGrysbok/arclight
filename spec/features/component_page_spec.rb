@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe 'Component Page', type: :feature do
+RSpec.describe 'Component Page' do
   let(:doc_id) { 'aoa271aspace_843e8f9f22bac69872d0802d6fffbb04' }
   let(:download_config) do
     ActiveSupport::HashWithIndifferentAccess.new(
@@ -33,7 +33,7 @@ RSpec.describe 'Component Page', type: :feature do
 
   describe 'Indexed Terms names section' do
     it 'includes names dt subheading text' do
-      expect(page).to have_css('dt.blacklight-names_ssim', text: 'Names:')
+      expect(page).to have_css('dt.blacklight-names', text: 'Names:')
     end
 
     it 'includes names dd link text' do
@@ -43,7 +43,7 @@ RSpec.describe 'Component Page', type: :feature do
 
   describe 'Indexed Terms places section' do
     it 'includes places dt subheading text' do
-      expect(page).to have_css('dt.blacklight-places_ssim', text: 'Places:')
+      expect(page).to have_css('dt.blacklight-places', text: 'Places:')
     end
 
     it 'includes places dd link text' do
@@ -55,11 +55,11 @@ RSpec.describe 'Component Page', type: :feature do
     let(:doc_id) { 'aoa271aspace_01daa89087641f7fc9dbd7a10d3f2da9' }
 
     it 'includes subjects dt subheading text' do
-      expect(page).to have_css('dt.blacklight-access_subjects_ssim', text: 'Subjects:')
+      expect(page).to have_css('dt.blacklight-access_subjects', text: 'Subjects:')
     end
 
     it 'includes subjects dd link text' do
-      expect(page).to have_css('dd.blacklight-access_subjects_ssim a', text: 'Records')
+      expect(page).to have_css('dd.blacklight-access_subjects a', text: 'Records')
     end
   end
 
@@ -84,7 +84,7 @@ RSpec.describe 'Component Page', type: :feature do
     end
 
     it 'multivalued notes are rendered as paragaphs' do
-      within 'dd.blacklight-appraisal_ssm' do
+      within 'dd.blacklight-appraisal' do
         expect(page).to have_css('p', count: 2)
       end
     end
@@ -112,7 +112,6 @@ RSpec.describe 'Component Page', type: :feature do
           expect(page).to have_css 'li:nth-child(2)', text: 'Statements of purpose, c.1902'
           expect(page).to have_css 'li:nth-child(3)',
                                    text: 'Constitution - notes on drafting of constitution, c.1902-1903'
-          expect(page).to have_css 'li', count: 32
         end
       end
     end
@@ -153,35 +152,27 @@ RSpec.describe 'Component Page', type: :feature do
       end
     end
 
-    context 'when there are more than two previous sibling documents for the current document' do
-      let(:doc_id) { 'm0198-xmlaspace_ref13_yl7' }
+    context 'when there are more than ten previous sibling documents for the current document' do
+      let(:doc_id) { 'lc0100aspace_ca60f0c03c4638b89e0348c3c6f7b50e' }
 
-      it 'hides all but the first previous sibling document items' do
+      it 'hides all but the first sibling document items' do
         within '#collection-context' do
-          expect(page).to have_css '.document-title-heading', text: 'Pages 273-353'
-          expect(page).to have_css '.document-title-heading', text: 'Pages 171-272'
-          expect(page).to have_css '.document-title-heading', text: 'Pages 79-170'
-          expect(page).not_to have_css '.document-title-heading', text: 'Pages 1-78'
+          expect(page).to have_css '.document-title-heading', text: 'Item AA001'
+          expect(page).to have_css '.document-title-heading', text: 'Item AA002'
+          expect(page).to have_css '.document-title-heading', text: 'Item AA003'
+          expect(page).not_to have_css '.document-title-heading', text: 'Item AA004'
+          expect(page).to have_css '.document-title-heading', text: 'Item AA059'
         end
       end
 
       it 'offers a button for displaying the hidden sibling document items' do
         within '#collection-context' do
           expect(page).to have_css '.btn-secondary', text: 'Expand'
-          expect(page).not_to have_css '.document-title-heading', text: 'Pages 1-78'
-          expect(page).to have_css '.document-title-heading', text: 'Pages 79-170'
-          expect(page).to have_css '.document-title-heading', text: 'Pages 171-272'
-          expect(page).to have_css '.document-title-heading', text: 'Pages 273-353'
+          expect(page).not_to have_css '.document-title-heading', text: 'Item AA004'
 
           first('.btn-secondary', text: 'Expand').click
 
-          expect(page).to have_css '.btn-secondary', text: 'Collapse'
-          expect(page).to have_css '.document-title-heading', text: 'Pages 1-78'
-
-          first('.btn-secondary', text: 'Collapse').click
-
-          expect(page).to have_css '.btn-secondary', text: 'Expand'
-          expect(page).not_to have_css '.document-title-heading', text: 'Pages 1-78'
+          expect(page).to have_css '.document-title-heading', text: 'Item AA004'
         end
       end
     end
@@ -198,7 +189,9 @@ RSpec.describe 'Component Page', type: :feature do
 
       it 'includes ancestor\'s preceding sibling when clicking ancestor\'s Expand button' do
         within '#collection-context' do
-          find('#aoa271aspace_563a320bb37d24a9e1e6f7bf95b52671-collapsible-hierarchy .prev-siblings button').click
+          within('#aoa271aspace_563a320bb37d24a9e1e6f7bf95b52671-collapsible-hierarchy') do
+            first('.btn-secondary', text: 'Expand').click
+          end
           expect(page).to have_css '.document-title-heading', text: 'Officers and directors - lists, 1961, n.d.'
         end
       end
@@ -216,21 +209,17 @@ RSpec.describe 'Component Page', type: :feature do
     end
   end
 
-  describe 'access tab', js: true do
-    it 'has visitation notes' do
-      expect(page).to have_css 'dt', text: 'LOCATION OF THIS COLLECTION:'
+  describe 'access section' do
+    it 'has access metadata' do
+      expect(page).to have_css 'dt', text: 'Location of this collection:'
       expect(page).to have_css 'dd', text: 'Building 38, Room 1E-21'
-    end
 
-    it 'has a restrictions and access' do
-      expect(page).to have_css 'dt', text: 'PARENT RESTRICTIONS:'
+      expect(page).to have_css 'dt', text: 'Parent restrictions:'
       expect(page).to have_css 'dd', text: /^RESTRICTED: Access to these folders requires prior written approval./
-      expect(page).to have_css 'dt', text: 'TERMS OF ACCESS:'
+      expect(page).to have_css 'dt', text: 'Parent terms of access:'
       expect(page).to have_css 'dd', text: /^Copyright was transferred to the public domain./
-    end
 
-    it 'has a contact' do
-      expect(page).to have_css 'dt', text: 'CONTACT:'
+      expect(page).to have_css 'dt', text: 'Contact:'
       expect(page).to have_css 'dd', text: 'hmdref@nlm.nih.gov'
     end
   end
@@ -252,8 +241,9 @@ RSpec.describe 'Component Page', type: :feature do
 
     it 'renders links to the files for download' do
       within '.al-show-actions-box-downloads-container' do
-        expect(page).to have_link 'Download finding aid (1.23MB)'
-        expect(page).to have_link 'Download EAD (123456)'
+        click_button 'Download'
+        expect(page).to have_link 'Finding aid'
+        expect(page).to have_link 'EAD'
       end
     end
   end

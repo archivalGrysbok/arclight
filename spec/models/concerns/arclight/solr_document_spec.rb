@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 RSpec.describe Arclight::SolrDocument do
-  let(:document) { SolrDocument.new }
+  let(:document) { SolrDocument.new(id: '123') }
 
   describe 'custom accessors' do
     it { expect(document).to respond_to(:parent_ids) }
@@ -96,7 +96,7 @@ RSpec.describe Arclight::SolrDocument do
   end
 
   describe '#terms' do
-    let(:document) { SolrDocument.new(userestrict_ssm: 'Must use gloves with photos.') }
+    let(:document) { SolrDocument.new(userestrict_html_tesm: 'Must use gloves with photos.') }
 
     it 'uses the self terms' do
       expect(document.terms).to eq 'Must use gloves with photos.'
@@ -104,7 +104,7 @@ RSpec.describe Arclight::SolrDocument do
   end
 
   describe '#parent_restrictions' do
-    let(:document) { SolrDocument.new(parent_access_restrict_ssm: 'No access.') }
+    let(:document) { SolrDocument.new(parent_access_restrict_tesm: 'No access.') }
 
     it 'uses the parent_restrictions' do
       expect(document.parent_restrictions).to eq 'No access.'
@@ -112,19 +112,19 @@ RSpec.describe Arclight::SolrDocument do
   end
 
   describe '#parent_terms' do
-    let(:document) { SolrDocument.new(parent_access_terms_ssm: 'Must use gloves with photos.') }
+    let(:document) { SolrDocument.new(parent_access_terms_tesm: 'Must use gloves with photos.') }
 
     it 'uses the parent_terms' do
       expect(document.parent_terms).to eq 'Must use gloves with photos.'
     end
   end
 
-  describe '#parent_document' do
-    let(:document) { SolrDocument.new(parent: { docs: [{ id: 'abc123' }] }) }
+  describe '#collection' do
+    let(:document) { SolrDocument.new(id: 'blah', collection: { docs: [{ id: 'abc123' }] }) }
 
     it 'creates a SolrDocument of the first parent document' do
-      expect(document.parent_document).to be_an SolrDocument
-      expect(document.parent_document.id).to eq 'abc123'
+      expect(document.collection).to be_an SolrDocument
+      expect(document.collection.id).to eq 'abc123'
     end
   end
 
@@ -132,7 +132,7 @@ RSpec.describe Arclight::SolrDocument do
     before { allow(document).to receive(:response).and_return(response) }
 
     context 'without any highlighting data at all' do
-      let(:response) { { highlighting: {} } }
+      let(:response) { { 'highlighting' => {} } }
 
       it 'handles gracefully' do
         expect(document.highlights).to be_falsey
@@ -140,7 +140,7 @@ RSpec.describe Arclight::SolrDocument do
     end
 
     context 'without any highlighting hits for document' do
-      let(:response) { { highlighting: { document.id => {} } } }
+      let(:response) { { 'highlighting' => { document.id => {} } } }
 
       it 'handles gracefully' do
         expect(document.highlights).to be_falsey
@@ -148,7 +148,7 @@ RSpec.describe Arclight::SolrDocument do
     end
 
     context 'with highlighting hits for document but wrong field' do
-      let(:response) { { highlighting: { document.id => { title: %w[my hits] } } } }
+      let(:response) { { 'highlighting' => { document.id => { 'title' => %w[my hits] } } } }
 
       it 'handles gracefully' do
         expect(document.highlights).to be_falsey
@@ -156,7 +156,7 @@ RSpec.describe Arclight::SolrDocument do
     end
 
     context 'with highlighting hits' do
-      let(:response) { { highlighting: { document.id => { text: %w[my hits] } } } }
+      let(:response) { { 'highlighting' => { document.id => { 'text' => %w[my hits] } } } }
 
       it 'handles gracefully' do
         expect(document.highlights).to be_truthy

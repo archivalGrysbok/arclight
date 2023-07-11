@@ -33,6 +33,10 @@ Metrics/BlockLength:
     - 'spec/**/*'
     - 'tasks/**/*'
 
+Naming/PredicateName:
+  ForbiddenPrefixes:
+    - _is
+
 Layout/LineLength:
   Max: 160
 
@@ -196,9 +200,9 @@ RSpec/SubjectDeclaration: # new in 2.5
   Enabled: true
 RSpec/VerifiedDoubleReference: # new in 2.10.0
   Enabled: true
-RSpec/Capybara/SpecificFinders: # new in 2.13
+Capybara/SpecificFinders: # new in 2.13
   Enabled: true
-RSpec/Capybara/SpecificMatcher: # new in 2.12
+Capybara/SpecificMatcher: # new in 2.12
   Enabled: true
 RSpec/FactoryBot/SyntaxMethods: # new in 2.7
   Enabled: true
@@ -299,4 +303,60 @@ Rails/WhereExists: # new in 2.7
 Rails/WhereMissing: # new in 2.16
   Enabled: true
 Rails/WhereNot: # new in 2.8
+  Enabled: true
+Lint/DuplicateMagicComment: # new in 1.37
+  Enabled: true
+Style/OperatorMethodCall: # new in 1.37
+  Enabled: true
+Style/RedundantEach: # new in 1.38
+  Enabled: true
+Style/RedundantStringEscape: # new in 1.37
+  Enabled: true
+RSpec/SortMetadata: # new in 2.14
+  Enabled: true
+Capybara/NegationMatcher: # new in 2.14
+  Enabled: true
+Capybara/SpecificActions: # new in 2.14
+  Enabled: true
+RSpec/FactoryBot/ConsistentParenthesesStyle: # new in 2.14
+  Enabled: false # https://github.com/rspec/rspec-rails/issues/2635
+RSpec/Rails/InferredSpecType: # new in 2.14
+  Enabled: true
+Rails/ActionOrder: # new in 2.17
+  Enabled: true
+Rails/IgnoredColumnsAssignment: # new in 2.17
+  Enabled: true
+Rails/WhereNotWithMultipleConditions: # new in 2.17
+  Enabled: true
+Gemspec/DevelopmentDependencies: # new in 1.44
+  Enabled: true
+Lint/UselessRescue: # new in 1.43
+  Enabled: true
+Style/ArrayIntersect: # new in 1.40
+  Enabled: true
+Style/ComparableClamp: # new in 1.44
+  Enabled: true
+Style/ConcatArrayLiterals: # new in 1.41
+  Enabled: true
+Style/MapToSet: # new in 1.42
+  Enabled: true
+Style/MinMaxComparison: # new in 1.42
+  Enabled: true
+Style/RedundantConstantBase: # new in 1.40
+  Enabled: true
+Style/RedundantDoubleSplatHashBraces: # new in 1.41
+  Enabled: true
+Style/RedundantHeredocDelimiterQuotes: # new in 1.45
+  Enabled: true
+Capybara/MatchStyle: # new in 2.17
+  Enabled: true
+RSpec/DuplicatedMetadata: # new in 2.16
+  Enabled: true
+RSpec/PendingWithoutReason: # new in 2.16
+  Enabled: true
+RSpec/FactoryBot/FactoryNameStyle: # new in 2.16
+  Enabled: false # https://github.com/rubocop/rubocop-rspec/issues/1587
+RSpec/Rails/MinitestAssertions: # new in 2.17
+  Enabled: true
+Rails/ResponseParsedBody: # new in 2.18
   Enabled: true

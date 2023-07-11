@@ -1,3 +1,5 @@
+[![Gem Version](https://badge.fury.io/rb/arclight.svg)](https://badge.fury.io/rb/arclight)
+[![npm version](https://badge.fury.io/js/arclight.svg)](https://badge.fury.io/js/arclight)
 ![Build Status](https://github.com/projectblacklight/arclight/workflows/CI/badge.svg)
 [![All Contributors](https://img.shields.io/badge/all_contributors-17-orange.svg?style=flat-square)](CONTRIBUTORS.md)
 [![Code Climate Test Coverage](https://codeclimate.com/github/projectblacklight/arclight/badges/coverage.svg)](https://codeclimate.com/github/projectblacklight/arclight/coverage)
@@ -9,8 +11,8 @@ A Rails engine supporting discovery of archival materials, based on [Blacklight]
 
 ## Requirements
 
-* [Ruby](https://www.ruby-lang.org/en/) 2.7 or later
-* [Rails](http://rubyonrails.org) 6.1 or later
+* [Ruby](https://www.ruby-lang.org/en/) 3.0.3 or later
+* [Rails](http://rubyonrails.org) 7.0 or later
 * Solr 8.1 or later
 
 ## Installation
@@ -68,15 +70,11 @@ bundle exec rake arclight:seed
 
 * General
   * [ArcLight demo site](https://arclight-demo.projectblacklight.org/)
-  * [ArcLight project wiki](https://bit.ly/arclightproject): includes design process documentation
-  * [ArcLight Github Wiki](https://github.com/projectblacklight/arclight/wiki): developer/implementor documentation
+  * [ArcLight Github wiki](https://github.com/projectblacklight/arclight/wiki): developer/implementor documentation
   * [Blacklight wiki](https://github.com/projectblacklight/blacklight/wiki)
   * Use the [ArcLight Google Group](http://groups.google.com/d/forum/arclight-community) to contact us with questions
-* ArcLight Phase II:
-  * [Project overview](https://wiki.duraspace.org/display/samvera/ArcLight+Phase+II)
 * ArcLight MVP:
   * [MVP sprint demo videos](https://www.youtube.com/playlist?list=PLMdUaIJ0G8QgbuDCUVvFhTSTO96N37lRA)
-  * [Project overview](https://wiki.duraspace.org/display/samvera/ArcLight+MVP)
 
 ## Contributors
 
@@ -84,7 +82,7 @@ See the [CONTRIBUTORS](CONTRIBUTORS.md) file.
 
 ## Development
 
-ArcLight development uses [`solr_wrapper`](https://rubygems.org/gems/solr_wrapper/versions/0.18.1) and [`engine_cart`](https://rubygems.org/gems/engine_cart) to host development instances of Solr and Rails server on your local machine.
+ArcLight requires Solr to be running.  For development you can start this using `solr_wrapper` or you may choose to use Docker. Start Solr using Docker by doing `docker compose up`.
 
 ### Run the test suite
 
@@ -107,12 +105,19 @@ Then visit http://localhost:3000. It will also start a Solr instance on port 898
 
 You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-### Release a new version of the gem
+### Releasing
 
-To release a new version:
+#### To release a new gem:
 
 1. Update the version number in `lib/arclight/version.rb`
 2. Run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, build the gem file (e.g., `gem build arclight.gemspec`) and push the `.gem` file to [rubygems.org](https://rubygems.org) (e.g., `gem push arclight-x.y.z.gem`).
+
+#### To release the frontend sources:
+
+When any of the javascript components or SASS sources in the gem are changed, this package should be published to NPM with the following steps:
+1. [Install npm](https://www.npmjs.com/get-npm)
+2. Bump the version number in `package.json`
+3. run `npm publish` to push the javascript package to https://npmjs.org/package/arclight
 
 ## Contributing
 

@@ -12,18 +12,7 @@ module Arclight
     end
 
     def icon
-      blacklight_icon helpers.document_or_parent_icon(@document)
+      helpers.blacklight_icon helpers.document_or_parent_icon(@document)
     end
-
-    def breadcrumbs
-      args = {
-        offset: grouped? ? 2 : 0,
-        count: compact? ? 2 : nil
-      }
-
-      Arclight::BreadcrumbComponent.new(document: @document, **args)
-    end
-
-    delegate :grouped?, to: :helpers
   end
 end

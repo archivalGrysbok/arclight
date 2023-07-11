@@ -6,7 +6,7 @@ RSpec.describe Arclight::SearchBarComponent, type: :component do
   let(:render) do
     component.render_in(view_context)
   end
-  let(:view_context) { controller.view_context }
+  let(:view_context) { vc_test_controller.view_context }
 
   let(:rendered) do
     Capybara::Node::Simple.new(render)
@@ -17,10 +17,10 @@ RSpec.describe Arclight::SearchBarComponent, type: :component do
 
   describe 'within collection dropdown' do
     context 'when in a collection context on the search results page' do
-      let(:params) { { f: { collection_sim: ['some collection'] } } }
+      let(:params) { { f: { collection: ['some collection'] } } }
 
       it 'renders a name attribute on the select (so it will be sent through the form)' do
-        expect(rendered).to have_css('select[name="f[collection_sim][]"]')
+        expect(rendered).to have_css('select[name="f[collection][]"]')
       end
 
       it 'has the "this collection" option selected' do
@@ -29,14 +29,14 @@ RSpec.describe Arclight::SearchBarComponent, type: :component do
     end
 
     context 'when in a collection context, e.g. on show page for a collection' do
-      let(:document) { SolrDocument.new(id: 'abc123', collection_ssm: ['some collection']) }
+      let(:document) { SolrDocument.new(id: 'abc123', collection: { docs: [{ normalized_title_ssm: ['some collection'] }] }) }
 
       before do
         allow(view_context).to receive(:current_context_document).and_return(document)
       end
 
       it 'renders a name attribute on the select (so it will be sent through the form)' do
-        expect(rendered).to have_css('select[name="f[collection_sim][]"]')
+        expect(rendered).to have_css('select[name="f[collection][]"]')
       end
 
       it 'has the "this collection" option selected' do
@@ -47,10 +47,6 @@ RSpec.describe Arclight::SearchBarComponent, type: :component do
     context 'when not in a collection context' do
       it 'does not render a name attribute on the select (because it does not need to be sent through the form)' do
         expect(rendered).not_to have_select 'name'
-      end
-
-      it 'has the "all collections" option selected' do
-        expect(rendered).to have_css('select option[selected]', text: 'all collections')
       end
 
       it 'has the "this collection" option disabled' do

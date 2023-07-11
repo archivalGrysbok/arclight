@@ -1,5 +1,4 @@
-import 'arclight/collection_navigation'
-import 'arclight/context_navigation'
-import 'arclight/oembed_viewer'
-import 'arclight/truncator'
-import 'arclight/responsiveTruncator'
+import Truncate from 'arclight/truncate_controller'
+Stimulus.register('arclight-truncate', Truncate)
+import Oembed from 'arclight/oembed_controller'
+Stimulus.register('arclight-oembed', Oembed)

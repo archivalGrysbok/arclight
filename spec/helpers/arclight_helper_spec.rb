@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe ArclightHelper, type: :helper do
+RSpec.describe ArclightHelper do
   let(:params) { {} }
   let(:search_state) do
     Blacklight::SearchState.new(params, CatalogController.blacklight_config)
@@ -15,7 +15,7 @@ RSpec.describe ArclightHelper, type: :helper do
   describe '#collection_active?' do
     context 'with active collection search' do
       let(:params) do
-        { 'f' => { 'level_sim' => ['Collection'] } }
+        { 'f' => { 'level' => ['Collection'] } }
       end
 
       it do
@@ -109,26 +109,6 @@ RSpec.describe ArclightHelper, type: :helper do
     end
   end
 
-  describe '#on_repositories_show?' do
-    before { allow(helper).to receive(:action_name).twice.and_return('show') }
-
-    context 'with repositories show' do
-      it do
-        allow(helper).to receive(:controller_name).twice.and_return('repositories')
-        expect(helper.on_repositories_show?).to be true
-        expect(helper.repositories_active_class).to be_nil
-      end
-    end
-
-    context 'without repositories show' do
-      it do
-        allow(helper).to receive(:controller_name).twice.and_return('NOT repositories')
-        expect(helper.on_repositories_show?).to be false
-        expect(helper.repositories_active_class).to be_nil
-      end
-    end
-  end
-
   describe '#search_results_header_text' do
     subject(:text) { helper.search_results_header_text }
 
@@ -141,19 +121,19 @@ RSpec.describe ArclightHelper, type: :helper do
     end
 
     context 'when searching within a repository' do
-      let(:params) { { 'f' => { 'repository_sim' => ['My Repository'] } } }
+      let(:params) { { 'f' => { 'repository' => ['My Repository'] } } }
 
-      it { expect(text).to eq 'Collections : [My Repository]' }
+      it { is_expected.to eq 'Collections : [My Repository]' }
     end
 
     context 'when searching all collections' do
-      let(:params) { { 'f' => { 'level_sim' => ['Collection'] } } }
+      let(:params) { { 'f' => { 'level' => ['Collection'] } } }
 
-      it { expect(text).to eq 'Collections' }
+      it { is_expected.to eq 'Collections' }
     end
 
     context 'all other non-special search behavior' do
-      it { expect(text).to eq 'Search' }
+      it { is_expected.to eq 'Search' }
     end
   end
 

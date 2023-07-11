@@ -10,8 +10,8 @@ module ArclightHelper
   def repository_collections_path(repository)
     search_action_url(
       f: {
-        repository_sim: [repository.name],
-        level_sim: ['Collection']
+        repository: [repository.name],
+        level: ['Collection']
       }
     )
   end
@@ -30,15 +30,15 @@ module ArclightHelper
   ##
   # Classes used for customized show page in arclight
   def show_content_classes
-    'col-8 show-document order-2'
+    'col-12 col-lg-8 show-document order-2'
   end
 
   def show_sidebar_classes
-    'col-4 order-1 collection-sidebar'
+    'col-lg-4 order-1 collection-sidebar'
   end
 
   def collection_active?
-    search_state.filter('level_sim').values == ['Collection']
+    search_state.filter('level').values == ['Collection']
   end
 
   def collection_active_class
@@ -57,10 +57,6 @@ module ArclightHelper
     search_state.params_for_search.except('group', 'page')
   end
 
-  def on_repositories_show?
-    controller_name == 'repositories' && action_name == 'show'
-  end
-
   def on_repositories_index?
     controller_name == 'repositories' && action_name == 'index'
   end
@@ -74,7 +70,7 @@ module ArclightHelper
   #
   # @return [Repository]
   def repository_faceted_on
-    repos = search_state.filter('repository_sim').values
+    repos = search_state.filter('repository').values
     return unless repos.one?
 
     Arclight::Repository.find_by(name: repos.first)
@@ -94,43 +90,6 @@ module ArclightHelper
       'container'
     end
   end
-
-  def show_expanded?(document)
-    !original_document?(document) && within_original_tree?(document)
-  end
-
-  def within_original_tree?(document)
-    Array.wrap(params['original_parents']).map do |parent|
-      Arclight::Parent.new(id: parent, eadid: document.parent_ids.first, level: nil, label: nil).global_id
-    end.include?(document.id)
-  end
-
-  def original_document?(document)
-    document.id == params['original_document']
-  end
-
-  # rubocop:disable Metrics/MethodLength
-  def generic_context_navigation(document, original_parents: document.parent_ids, component_level: 1)
-    content_tag(
-      :div,
-      '',
-      class: 'context-navigator',
-      data: {
-        collapse: I18n.t('arclight.views.show.collapse'),
-        expand: I18n.t('arclight.views.show.expand'),
-        controller: 'arclight-context-navigation',
-        arclight: {
-          level: component_level,
-          path: search_catalog_path(hierarchy_context: 'component'),
-          name: document.collection_name,
-          originalDocument: document.id,
-          originalParents: original_parents,
-          eadid: document.normalized_eadid
-        }
-      }
-    )
-  end
-  # rubocop:enable Metrics/MethodLength
 
   def current_context_document
     @document

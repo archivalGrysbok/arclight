@@ -4,17 +4,67 @@
   margin-bottom: $spacer;
 }
 
-.al-show-breadcrumb .breadcrumb {
-  background-color: transparent;
-  margin-bottom: 0;
-  padding: 0;
+.al-show-breadcrumb {
+  border-bottom: $border-width solid $border-color;
+  padding-bottom: $spacer;
+  margin-bottom: $spacer * .75;
+  width: 100%;
+  
+  $bent-arrow: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='15'><path fill-rule='evenodd' d='M1.5 1.5A.5.5 0 0 0 1 2v4.8a2.5 2.5 0 0 0 2.5 2.5h9.793l-3.347 3.346a.5.5 0 0 0 .708.708l4.2-4.2a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 8.3H3.5A1.5 1.5 0 0 1 2 6.8V2a.5.5 0 0 0-.5-.5z'></path></svg>";
 
-  .breadcrumb-item + .breadcrumb-item {
-    padding-top: 2px;
+  .breadcrumb {
+    margin: 0;
 
-    &::before {
-      content: '';
+    .breadcrumb-item .breadcrumb {
+      padding-left: 0.5rem;
     }
+
+    .breadcrumb-item-1 > .breadcrumb {
+      padding-left: 1rem;
+    }
+
+    .breadcrumb-item-2 > .breadcrumb {
+      display: block;
+    }
+
+    .breadcrumb-item-3 {
+      display: inline-block;
+    }
+
+    .breadcrumb-item-3:first-of-type {
+      // This is if the series is a parent of this item.
+      &::before {
+        content: escape-svg(url($bent-arrow));
+      }
+    }
+
+    // last item doesn't get its own line unles s
+    .breadcrumb-item-4 {
+      display: inline-block;
+    }
+  }
+
+  .breadcrumb-item-4 {
+    &:first-child > .breadcrumb-text:first-child {
+      // This is if we're on a series (no svg node like on a collection). We still want the bent arrow to show.
+      &::before {
+        content: escape-svg(url($bent-arrow));
+      }
+    }
+  }
+
+  .breadcrumb-item-1, .breadcrumb-item-4 { // breadcrumb-item-3 can have multiple on one line
+    flex: 1 0 100%;
+    color: $gray-600;
+  }
+}
+
+// offcanvas sidebar is scrollable for smaller screens
+#sidebar {
+  overflow-y: scroll;
+
+  @include media-breakpoint-up(lg) {
+    overflow: hidden;
   }
 }
 
@@ -22,8 +72,12 @@
   padding-right: 1rem;
   border-right: $border-width solid $border-color;
 
-  h2, h3, h4 {
-    @extend .h5;
+  h2 {
+    font-size: 1.6rem;
+  }
+
+  h3 {
+    font-size: 1.1rem;
   }
 }
 
@@ -31,6 +85,7 @@
   border-bottom: $border-width solid $border-color;
   margin-bottom: $spacer;
   padding-bottom: $spacer * 1.33;
+  margin-left: $spacer;
 
   &:last-child {
     border-bottom: none;
@@ -38,7 +93,7 @@
 }
 
 .breadcrumb-home-link {
-  margin-bottom: ($spacer / 4);
+  margin-bottom: ($spacer * 0.25);
 }
 
 .al-show-actions-box {
@@ -60,97 +115,47 @@
     align-items: center;
   }
 
-  &-downloads {
-    padding-top: $spacer * .25;
-    white-space: nowrap;
-
-    &-container {
-      margin-top: $spacer * .5;
+  &-info {
+    .dropdown {
+      // prevent dropdown from being cut off by parent container
+      position: static;
+    }
+    .dropdown-toggle:after {
+      margin-left: 0;
     }
 
-    &-file {
-      &.blacklight-icons {
-        margin-right: $spacer * .5;
-
-        svg {
-          fill: $secondary;
-        }
+    table {
+      td {
+        text-align: right;
       }
     }
   }
-}
 
-.al-show-breadcrumb {
-  border-bottom: $border-width solid $border-color;
-  padding-bottom: $spacer * .5;
-  margin-bottom: $spacer * .75;
-}
-
-.breadcrumb-item {
-  flex: 1 0 100%;
-
-  &.al-bc-item {
-    &::before {
-      content: '»' !important;
-    }
+  svg.bi { 
+    vertical-align: text-bottom;
+    color: $light-icon-color;
   }
-}
-
-// Show page breadcrumbs
-@for $i from 1 to 20 {
-  .breadcrumb-item.breadcrumb-item-#{$i}.media {
-    padding-left: 0;
-
-    @media (max-width: 767px) {
-      &::before {
-        padding-right: 0;
-      }
-    }
-
-    @media (min-width: 768px) {
-      padding-left: ($i - 1) * 10px;
-	  }
+  
+  .dropdown-item svg.bi {
+    color: $dark-icon-color;
   }
-}
-
-// Show page metadata.
-// Indent to match terminal show page breadcrumb.
-@for $i from 1 to 20 {
-  .al-metadata-section.breadcrumb-item-#{$i} {
-    padding-left: 0;
-
-    @media (min-width: 768px) {
-      padding-left: ($i * 10) + 10px;
-    }
-  }
-}
-
-// Collapse +/- indicators
-.al-toggle-view-children {
-  &::after {
-    content: image-url('blacklight/plus.svg');
-  }
-  &:not(.collapsed)::after {
-    content: image-url('blacklight/minus.svg');
-  }
-}
-
-.al-toggle-children-container {
-  margin-left: -1.5rem;
-}
-
-.bookmark-toggle .toggle-bookmark {
-  display: inline;
-  margin-bottom: 0;
-  white-space: nowrap;
 }
 
 .bookmark-toggle {
   display: inline;
+  margin-left: 1em;
+  
+  .toggle-bookmark {
+    display: inline;
+    margin-bottom: 0;
+    white-space: nowrap;
+  }
 }
 
 .show-document {
-  .bookmark-toggle {
+  @extend .ps-lg-4;
+
+  .title-container .bookmark-toggle {
     @extend .card;
     @extend .bg-light;
     @extend .p-2;
@@ -163,18 +168,6 @@
     float: right;
   }
 }
-
-.al-request-button {
-  &.btn-link {
-    font-weight: 600;
-    line-height: 1;
-  }
-    @media (min-width: 1200px) {
-      margin-right: ($spacer / 2);
-    }
-
-}
-
 
 dl dd {
   overflow-wrap: break-word;

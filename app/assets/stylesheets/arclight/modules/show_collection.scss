@@ -4,27 +4,12 @@
   text-transform: uppercase;
 }
 
-#access, #metadata {
-  dl > dt {
-    font-size: $font-size-sm;
-    margin-top: (1rem - $font-size-sm) / 2;
-    text-transform: uppercase;
-  }
-}
-
 .al-collection-actions-menu {
   float: right;
 }
 
-.al-online-content-icon .blacklight-icons svg {
-  fill: $green;
-}
-
-p.media .col {
-  flex: auto;
-}
-// Access tab
-#access {
+// Access
+#access-and-use {
   dl dd {
     line-height: 1.4;
     margin-bottom: $spacer;
@@ -44,14 +29,10 @@ p.media .col {
   }
 
   .al-repository-contact-city_state_zip_country {
-    margin-bottom: ($spacer / 2);
+    margin-bottom: ($spacer * 0.5);
   }
 }
 
 .al-digital-object.breadcrumb-item {
-  margin-bottom: ($spacer / 2);
-}
-
-p.media.breadcrumb-item {
-  margin-bottom: ($spacer / 2);
+  margin-bottom: ($spacer * 0.5);
 }

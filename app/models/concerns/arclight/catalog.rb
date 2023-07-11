@@ -8,10 +8,14 @@ module Arclight
 
     included do
       before_action only: :index do
-        if (params.dig(:f, :collection_sim) || []).any?(&:blank?)
-          params[:f][:collection_sim].compact_blank!
-          params[:f].delete(:collection_sim) if params[:f][:collection_sim].blank?
+        if (params.dig(:f, :collection) || []).any?(&:blank?)
+          params[:f][:collection].compact_blank!
+          params[:f].delete(:collection) if params[:f][:collection].blank?
         end
+      end
+
+      before_action only: :hierarchy do
+        blacklight_config.search_state_fields += %i[id limit offset]
       end
 
       Blacklight::Configuration.define_field_access :summary_field, Blacklight::Configuration::ShowField
@@ -28,20 +32,13 @@ module Arclight
       Blacklight::Configuration.define_field_access :group_header_field, Blacklight::Configuration::IndexField
     end
 
-    ##
-    # Overriding the Blacklight method so that the hierarchy view does not start
-    # a new search session
-    def start_new_search_session?
-      %w[collection_context].exclude?(params[:view]) && super
+    def hierarchy
+      @response = search_service.search_results
     end
 
-    ##
-    # Overriding the Blacklight method so that hierarchy does not get stored as
-    # the preferred view
-    def store_preferred_view
-      return if %w[collection_context].include?(params[:view])
-
-      super
+    # Overrides blacklight search state so we can exclude some parameters from being passed into the SearchState
+    def search_state
+      @search_state ||= search_state_class.new(params.except('hierarchy', 'nest_path'), blacklight_config, self)
     end
   end
 end

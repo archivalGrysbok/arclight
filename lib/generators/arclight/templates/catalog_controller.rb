@@ -17,8 +17,16 @@ class CatalogController < ApplicationController
 
     ## Default parameters to send to solr for all search-like requests. See also SearchBuilder#processed_parameters
     config.default_solr_params = {
-      rows: 10
+      rows: 10,
+      fl: '*,collection:[subquery]',
+      'collection.q': '{!terms f=id v=$row._root_}',
+      'collection.defType': 'lucene',
+      'collection.fl': '*',
+      'collection.rows': 1
     }
+
+    # Sets the indexed Solr field that will display with highlighted matches
+    config.highlight_field = 'text'
 
     # solr path which will be added to solr base url before the other solr params.
     # config.solr_path = 'select'
@@ -26,19 +34,22 @@ class CatalogController < ApplicationController
     # items to show per page, each number in the array represent another option to choose from.
     # config.per_page = [10,20,50,100]
 
-    ## Default parameters to send on single-document requests to Solr. These settings are the Blacklight defaults (see SearchHelper#solr_doc_params) or
+    ## Default parameters to send on single-document requests to Solr.
+    ## These settings are the Blacklight defaults (see SearchHelper#solr_doc_params) or
     ## parameters included in the Blacklight-jetty document requestHandler.
     #
-    # config.default_document_solr_params = {
-    #  qt: 'document',
-    #  ## These are hard-coded in the blacklight 'document' requestHandler
-    #  # fl: '*',
-    #  # rows: 1,
-    #  # q: '{!term f=id v=$id}'
-    # }
+    config.default_document_solr_params = {
+     qt: 'document',
+     fl: '*,collection:[subquery]',
+     'collection.q': '{!terms f=id v=$row._root_}',
+     'collection.defType': 'lucene',
+     'collection.fl': '*',
+     'collection.rows': 1
+    }
 
-
-    config.add_results_document_tool(:bookmark, partial: 'bookmark_control', if: :render_bookmarks_control?)
+    config.header_component = Arclight::HeaderComponent
+    config.add_results_document_tool(:online, component: Arclight::OnlineStatusIndicatorComponent)
+    config.add_results_document_tool(:arclight_bookmark_control, component: Arclight::BookmarkComponent)
 
     config.add_results_collection_tool(:group_toggle)
     config.add_results_collection_tool(:sort_widget)
@@ -56,27 +67,29 @@ class CatalogController < ApplicationController
     config.index.group_component = Arclight::GroupComponent
     config.index.constraints_component = Arclight::ConstraintsComponent
     config.index.document_presenter_class = Arclight::IndexPresenter
-    config.add_results_document_tool :arclight_bookmark_control, partial: 'arclight_bookmark_control'
     config.index.search_bar_component = Arclight::SearchBarComponent
-    config.index.document_actions.delete(:bookmark)
     # config.index.thumbnail_field = 'thumbnail_path_ss'
 
     # solr field configuration for document/show views
     # config.show.title_field = 'title_display'
     config.show.document_component = Arclight::DocumentComponent
+    config.show.sidebar_component = Arclight::SidebarComponent
+    config.show.breadcrumb_component = Arclight::BreadcrumbsHierarchyComponent
     config.show.embed_component = Arclight::EmbedComponent
+    config.show.access_component = Arclight::AccessComponent
+    config.show.online_status_component = Arclight::OnlineStatusIndicatorComponent
     config.show.display_type_field = 'level_ssm'
     # config.show.thumbnail_field = 'thumbnail_path_ss'
     config.show.document_presenter_class = Arclight::ShowPresenter
     config.show.metadata_partials = %i[
       summary_field
-      access_field
       background_field
       related_field
       indexed_terms_field
+      access_field
     ]
 
-    config.show.context_access_tab_items = %i[
+    config.show.collection_access_items = %i[
       terms_field
       cite_field
       in_person_field
@@ -88,16 +101,12 @@ class CatalogController < ApplicationController
       component_indexed_terms_field
     ]
 
-    config.show.component_access_tab_items = %i[
+    config.show.component_access_items = %i[
       component_terms_field
       cite_field
       in_person_field
       contact_field
     ]
-
-    ##
-    # Collection Context
-    config.view.collection_context(display_control: false, document_component: Arclight::DocumentCollectionContextComponent)
 
     ##
     # Compact index view
@@ -124,25 +133,19 @@ class CatalogController < ApplicationController
     # facet bar
     #
     # set :index_range to true if you want the facet pagination view to have facet prefix-based navigation
-    #  (useful when user clicks "more" on a large facet and wants to navigate alphabetically across a large set of results)
-    # :index_range can be an array or range of prefixes that will be used to create the navigation (note: It is case sensitive when searching values)
+    #  (useful when user clicks "more" on a large facet and wants to navigate alphabetically
+    #  across a large set of results)
+    # :index_range can be an array or range of prefixes that will be used to create the navigation
+    #  (note: It is case sensitive when searching values)
 
-    config.add_facet_field 'collection_sim', label: 'Collection', limit: 10
-    config.add_facet_field 'creator_ssim', label: 'Creator', limit: 10
-    config.add_facet_field 'creators_ssim', label: 'Creator', show: false
-    config.add_facet_field 'date_range_sim', label: 'Date range', range: true
-    config.add_facet_field 'level_sim', label: 'Level', limit: 10
-    config.add_facet_field 'names_ssim', label: 'Names', limit: 10
-    config.add_facet_field 'repository_sim', label: 'Repository', limit: 10
-    config.add_facet_field 'geogname_sim', label: 'Place', limit: 10
-    config.add_facet_field 'places_ssim', label: 'Places', show: false
-    config.add_facet_field 'access_subjects_ssim', label: 'Subject', limit: 10
-    config.add_facet_field 'component_level_isim', show: false
-
-    # Note that parent_ssim is an array of all ancestor nodes, including the parent
-    # parent_ssi is just the immediate parent; it's used in queries for context nav
-    config.add_facet_field 'parent_ssim', show: false
-    config.add_facet_field 'parent_ssi', show: false
+    config.add_facet_field 'collection', field: 'collection_ssim', limit: 10
+    config.add_facet_field 'creator', field: 'creator_ssim', limit: 10
+    config.add_facet_field 'date_range', field: 'date_range_ssim', range: true
+    config.add_facet_field 'level', field: 'level_ssim', limit: 10
+    config.add_facet_field 'names', field: 'names_ssim', limit: 10
+    config.add_facet_field 'repository', field: 'repository_ssim', limit: 10
+    config.add_facet_field 'place', field: 'geogname_ssim', limit: 10
+    config.add_facet_field 'subject', field: 'access_subjects_ssim', limit: 10
 
     # Have BL send all facet field names to Solr, which has been the default
     # previously. Simply remove these lines if you'd rather use Solr request
@@ -155,11 +158,12 @@ class CatalogController < ApplicationController
       words_connector: '<br/>',
       two_words_connector: '<br/>',
       last_word_connector: '<br/>'
-    }, compact: true
-    config.add_index_field 'creator', accessor: true
-    config.add_index_field 'abstract_or_scope', accessor: true, truncate: true, collection_context: true, repository_context: true, helper_method: :render_html_tags
+    }, compact: true, component: Arclight::IndexMetadataFieldComponent
+    config.add_index_field 'creator', accessor: true, component: Arclight::IndexMetadataFieldComponent
+    config.add_index_field 'abstract_or_scope', accessor: true, truncate: true, repository_context: true, helper_method: :render_html_tags, component: Arclight::IndexMetadataFieldComponent
+    config.add_index_field 'breadcrumbs', accessor: :itself, component: Arclight::SearchResultBreadcrumbsComponent, compact: { count: 2 }
 
-    config.add_facet_field 'has_online_content_ssim', label: 'Access', query: {
+    config.add_facet_field 'access', query: {
       online: { label: 'Online access', fq: 'has_online_content_ssim:true' }
     }
 
@@ -190,7 +194,7 @@ class CatalogController < ApplicationController
     config.add_search_field 'within_collection' do |field|
       field.include_in_simple_select = false
       field.solr_parameters = {
-        fq: '-level_sim:Collection'
+        fq: '-level_ssim:Collection'
       }
     end
 
@@ -258,46 +262,46 @@ class CatalogController < ApplicationController
     # ===========================
 
     # Collection Show Page - Summary Section
-    config.add_summary_field 'creators_ssim', label: 'Creator', link_to_facet: true
-    config.add_summary_field 'abstract_ssm', label: 'Abstract', helper_method: :render_html_tags
-    config.add_summary_field 'extent_ssm', label: 'Extent'
-    config.add_summary_field 'language_ssm', label: 'Language'
-    config.add_summary_field 'prefercite_ssm', label: 'Preferred citation', helper_method: :render_html_tags
+    config.add_summary_field 'creators', field: 'creators_ssim', link_to_facet: true
+    config.add_summary_field 'abstract', field: 'abstract_html_tesm', helper_method: :render_html_tags
+    config.add_summary_field 'extent', field: 'extent_ssm'
+    config.add_summary_field 'language', field: 'language_ssim'
+    config.add_summary_field 'prefercite', field: 'prefercite_html_tesm', helper_method: :render_html_tags
 
     # Collection Show Page - Background Section
-    config.add_background_field 'scopecontent_ssm', label: 'Scope and Content', helper_method: :render_html_tags
-    config.add_background_field 'bioghist_ssm', label: 'Biographical / Historical', helper_method: :render_html_tags
-    config.add_background_field 'acqinfo_ssim', label: 'Acquisition information', helper_method: :render_html_tags
-    config.add_background_field 'appraisal_ssm', label: 'Appraisal information', helper_method: :render_html_tags
-    config.add_background_field 'custodhist_ssm', label: 'Custodial history', helper_method: :render_html_tags
-    config.add_background_field 'processinfo_ssm', label: 'Processing information', helper_method: :render_html_tags
-    config.add_background_field 'arrangement_ssm', label: 'Arrangement', helper_method: :render_html_tags
-    config.add_background_field 'accruals_ssm', label: 'Accruals', helper_method: :render_html_tags
-    config.add_background_field 'phystech_ssm', label: 'Physical / technical requirements', helper_method: :render_html_tags
-    config.add_background_field 'physloc_ssm', label: 'Physical location', helper_method: :render_html_tags
-    config.add_background_field 'descrules_ssm', label: 'Rules or conventions', helper_method: :render_html_tags
+    config.add_background_field 'scopecontent', field: 'scopecontent_html_tesm', helper_method: :render_html_tags
+    config.add_background_field 'bioghist', field: 'bioghist_html_tesm', helper_method: :render_html_tags
+    config.add_background_field 'acqinfo', field: 'acqinfo_ssim', helper_method: :render_html_tags
+    config.add_background_field 'appraisal', field: 'appraisal_html_tesm', helper_method: :render_html_tags
+    config.add_background_field 'custodhist', field: 'custodhist_html_tesm', helper_method: :render_html_tags
+    config.add_background_field 'processinfo', field: 'processinfo_html_tesm', helper_method: :render_html_tags
+    config.add_background_field 'arrangement', field: 'arrangement_html_tesm', helper_method: :render_html_tags
+    config.add_background_field 'accruals', field: 'accruals_html_tesm', helper_method: :render_html_tags
+    config.add_background_field 'phystech', field: 'phystech_html_tesm', helper_method: :render_html_tags
+    config.add_background_field 'physloc', field: 'physloc_html_tesm', helper_method: :render_html_tags
+    config.add_background_field 'descrules', field: 'descrules_ssm', helper_method: :render_html_tags
 
     # Collection Show Page - Related Section
-    config.add_related_field 'relatedmaterial_ssm', label: 'Related material', helper_method: :render_html_tags
-    config.add_related_field 'separatedmaterial_ssm', label: 'Separated material', helper_method: :render_html_tags
-    config.add_related_field 'otherfindaid_ssm', label: 'Other finding aids', helper_method: :render_html_tags
-    config.add_related_field 'altformavail_ssm', label: 'Alternative form available', helper_method: :render_html_tags
-    config.add_related_field 'originalsloc_ssm', label: 'Location of originals', helper_method: :render_html_tags
+    config.add_related_field 'relatedmaterial', field: 'relatedmaterial_html_tesm', helper_method: :render_html_tags
+    config.add_related_field 'separatedmaterial', field: 'separatedmaterial_html_tesm', helper_method: :render_html_tags
+    config.add_related_field 'otherfindaid', field: 'otherfindaid_html_tesm', helper_method: :render_html_tags
+    config.add_related_field 'altformavail', field: 'altformavail_html_tesm', helper_method: :render_html_tags
+    config.add_related_field 'originalsloc', field: 'originalsloc_html_tesm', helper_method: :render_html_tags
 
     # Collection Show Page - Indexed Terms Section
-    config.add_indexed_terms_field 'access_subjects_ssim', label: 'Subjects', link_to_facet: true, separator_options: {
+    config.add_indexed_terms_field 'access_subjects', field: 'access_subjects_ssim', link_to_facet: true, separator_options: {
       words_connector: '<br/>',
       two_words_connector: '<br/>',
       last_word_connector: '<br/>'
     }
 
-    config.add_indexed_terms_field 'names_coll_ssim', label: 'Names', separator_options: {
+    config.add_indexed_terms_field 'names_coll', field: 'names_coll_ssim', separator_options: {
       words_connector: '<br/>',
       two_words_connector: '<br/>',
       last_word_connector: '<br/>'
     }, helper_method: :link_to_name_facet
 
-    config.add_indexed_terms_field 'places_ssim', label: 'Places', link_to_facet: true, separator_options: {
+    config.add_indexed_terms_field 'places', field: 'places_ssim', link_to_facet: true, separator_options: {
       words_connector: '<br/>',
       two_words_connector: '<br/>',
       last_word_connector: '<br/>'
@@ -308,39 +312,39 @@ class CatalogController < ApplicationController
     # ==========================
 
     # Component Show Page - Metadata Section
-    config.add_component_field 'containers', label: 'Containers', accessor: 'containers', separator_options: {
+    config.add_component_field 'containers', accessor: 'containers', separator_options: {
       words_connector: ', ',
       two_words_connector: ', ',
       last_word_connector: ', '
     }, if: lambda { |_context, _field_config, document|
       document.containers.present?
     }
-    config.add_component_field 'abstract_ssm', label: 'Abstract', helper_method: :render_html_tags
-    config.add_component_field 'extent_ssm', label: 'Extent'
-    config.add_component_field 'scopecontent_ssm', label: 'Scope and Content', helper_method: :render_html_tags
-    config.add_component_field 'acqinfo_ssim', label: 'Acquisition information', helper_method: :render_html_tags
-    config.add_component_field 'appraisal_ssm', label: 'Appraisal information', helper_method: :render_html_tags
-    config.add_component_field 'custodhist_ssm', label: 'Custodial history', helper_method: :render_html_tags
-    config.add_component_field 'processinfo_ssm', label: 'Processing information', helper_method: :render_html_tags
-    config.add_component_field 'arrangement_ssm', label: 'Arrangement', helper_method: :render_html_tags
-    config.add_component_field 'accruals_ssm', label: 'Accruals', helper_method: :render_html_tags
-    config.add_component_field 'phystech_ssm', label: 'Physical / technical requirements', helper_method: :render_html_tags
-    config.add_component_field 'physloc_ssm', label: 'Physical location', helper_method: :render_html_tags
+    config.add_component_field 'abstract', field: 'abstract_html_tesm', helper_method: :render_html_tags
+    config.add_component_field 'extent', field: 'extent_ssm'
+    config.add_component_field 'scopecontent', field: 'scopecontent_html_tesm', helper_method: :render_html_tags
+    config.add_component_field 'acqinfo', field: 'acqinfo_ssim', helper_method: :render_html_tags
+    config.add_component_field 'appraisal', field: 'appraisal_html_tesm', helper_method: :render_html_tags
+    config.add_component_field 'custodhist', field: 'custodhist_html_tesm', helper_method: :render_html_tags
+    config.add_component_field 'processinfo', field: 'processinfo_html_tesm', helper_method: :render_html_tags
+    config.add_component_field 'arrangement', field: 'arrangement_html_tesm', helper_method: :render_html_tags
+    config.add_component_field 'accruals', field: 'accruals_html_tesm', helper_method: :render_html_tags
+    config.add_component_field 'phystech', field: 'phystech_html_tesm', helper_method: :render_html_tags
+    config.add_component_field 'physloc', field: 'physloc_html_tesm', helper_method: :render_html_tags
 
     # Component Show Page - Indexed Terms Section
-    config.add_component_indexed_terms_field 'access_subjects_ssim', label: 'Subjects', link_to_facet: true, separator_options: {
+    config.add_component_indexed_terms_field 'access_subjects', field: 'access_subjects_ssim', link_to_facet: true, separator_options: {
       words_connector: '<br/>',
       two_words_connector: '<br/>',
       last_word_connector: '<br/>'
     }
 
-    config.add_component_indexed_terms_field 'names_ssim', label: 'Names', separator_options: {
+    config.add_component_indexed_terms_field 'names', field: 'names_ssim', separator_options: {
       words_connector: '<br/>',
       two_words_connector: '<br/>',
       last_word_connector: '<br/>'
     }, helper_method: :link_to_name_facet
 
-    config.add_component_indexed_terms_field 'places_ssim', label: 'Places', link_to_facet: true, separator_options: {
+    config.add_component_indexed_terms_field 'places', field: 'places_ssim', link_to_facet: true, separator_options: {
       words_connector: '<br/>',
       two_words_connector: '<br/>',
       last_word_connector: '<br/>'
@@ -351,24 +355,24 @@ class CatalogController < ApplicationController
     # =================
 
     # Collection Show Page Access Tab - Terms and Conditions Section
-    config.add_terms_field 'accessrestrict_ssm', label: 'Restrictions', helper_method: :render_html_tags
-    config.add_terms_field 'userestrict_ssm', label: 'Terms of Access', helper_method: :render_html_tags
+    config.add_terms_field 'restrictions', field: 'accessrestrict_html_tesm', helper_method: :render_html_tags
+    config.add_terms_field 'terms', field: 'userestrict_html_tesm', helper_method: :render_html_tags
 
     # Component Show Page Access Tab - Terms and Condition Section
-    config.add_component_terms_field 'accessrestrict_ssm', label: 'Restrictions', helper_method: :render_html_tags
-    config.add_component_terms_field 'userestrict_ssm', label: 'Terms of Access', helper_method: :render_html_tags
-    config.add_component_terms_field 'parent_access_restrict_ssm', label: 'Parent Restrictions', helper_method: :render_html_tags
-    config.add_component_terms_field 'parent_access_terms_ssm', label: 'Parent Terms of Access', helper_method: :render_html_tags
+    config.add_component_terms_field 'restrictions', field: 'accessrestrict_html_tesm', helper_method: :render_html_tags
+    config.add_component_terms_field 'terms', field: 'userestrict_html_tesm', helper_method: :render_html_tags
+    config.add_component_terms_field 'parent_restrictions', field: 'parent_access_restrict_tesm', helper_method: :render_html_tags
+    config.add_component_terms_field 'parent_terms', field: 'parent_access_terms_tesm', helper_method: :render_html_tags
 
     # Collection and Component Show Page Access Tab - In Person Section
-    config.add_in_person_field 'repository_location', values: ->(_, document, _) { document.repository_config }, label: 'Location of this collection', component: Arclight::RepositoryLocationComponent
-    config.add_in_person_field 'before_you_visit', values: ->(_, document, _) { document.repository_config&.visit_note }, label: 'Before you visit'
+    config.add_in_person_field 'repository_location', values: ->(_, document, _) { document.repository_config }, component: Arclight::RepositoryLocationComponent
+    config.add_in_person_field 'before_you_visit', values: ->(_, document, _) { document.repository_config&.visit_note }
 
     # Collection and Component Show Page Access Tab - How to Cite Section
-    config.add_cite_field 'prefercite_ssm', label: 'Preferred citation', helper_method: :render_html_tags
+    config.add_cite_field 'prefercite', field: 'prefercite_html_tesm', helper_method: :render_html_tags
 
     # Collection and Component Show Page Access Tab - Contact Section
-    config.add_contact_field 'repository_contact', values: ->(_, document, _) { document.repository_config&.contact }, label: 'Contact'
+    config.add_contact_field 'repository_contact', values: ->(_, document, _) { document.repository_config&.contact }
 
     # Group header values
     config.add_group_header_field 'abstract_or_scope', accessor: true, truncate: true, helper_method: :render_html_tags

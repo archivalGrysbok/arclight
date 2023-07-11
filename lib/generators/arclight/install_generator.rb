@@ -35,7 +35,7 @@ module Arclight
 
     def add_custom_routes
       inject_into_file 'config/routes.rb', after: "mount Blacklight::Engine => '/'" do
-        "\n    mount Arclight::Engine => '/'\n"
+        "\n  mount Arclight::Engine => '/'\n"
       end
 
       gsub_file 'config/routes.rb', 'root to: "catalog#index"', 'root to: "arclight/repositories#index"'
@@ -43,6 +43,7 @@ module Arclight
 
     def copy_styles
       copy_file 'arclight.scss', 'app/assets/stylesheets/arclight.scss'
+      remove_file 'app/assets/stylesheets/blacklight.scss' # Avoid two copies of bootstrap
     end
 
     def add_arclight_search_behavior
@@ -63,6 +64,10 @@ module Arclight
       copy_file 'config/downloads.yml' unless File.exist?('config/downloads.yml')
     end
 
+    def add_i18n_config
+      copy_file 'config/locales/arclight.en.yml'
+    end
+
     def modify_blacklight_yml
       gsub_file 'config/locales/blacklight.en.yml', "application_name: 'Blacklight'", "application_name: 'Arclight'"
     end
@@ -74,6 +79,15 @@ module Arclight
       else
         install_javascript_dependencies
       end
+    end
+
+    def inject_arclight_routes
+      inject_into_file 'config/routes.rb',
+                       "  concern :hierarchy, Arclight::Routes::Hierarchy.new\n",
+                       after: /concern :exportable.*\n/
+      inject_into_file 'config/routes.rb',
+                       "  concerns :hierarchy\n",
+                       after: /resources :solr_documents.*\n/
     end
 
     private
@@ -98,24 +112,15 @@ module Arclight
       say 'Arclight Importmap asset generation'
 
       append_to_file 'config/importmap.rb', <<~RUBY
-        pin "jquery", to: "https://ga.jspm.io/npm:jquery@3.6.0/dist/jquery.js"
         pin "arclight", to: "arclight/arclight.js"
         # TODO: We may be able to move these to a single importmap for arclight.
-        pin "arclight/collection_navigation", to: "arclight/collection_navigation.js"
-        pin "arclight/context_navigation", to: "arclight/context_navigation.js"
-        pin "arclight/oembed_viewer", to: "arclight/oembed_viewer.js"
-        pin "arclight/truncator", to: "arclight/truncator.js"
-        pin "arclight/responsiveTruncator", to: "arclight/responsiveTruncator.js"
+        pin "arclight/oembed_controller", to: "arclight/oembed_controller.js"
+        pin "arclight/truncate_controller", to: "arclight/truncate_controller.js"
       RUBY
     end
 
     def import_arclight_javascript
-      inject_into_file 'app/javascript/application.js', after: 'import "blacklight"' do
-        "\n  import $ from \"jquery\"\n  " \
-          "window.$ = $ // required by arclight\n  " \
-          "window.jQuery = $ // required by arclight/responsive_truncator.js\n  " \
-          'import "arclight"'
-      end
+      append_to_file 'app/javascript/application.js', "\nimport \"arclight\""
     end
   end
 end

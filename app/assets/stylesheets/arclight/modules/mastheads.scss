@@ -1,22 +1,22 @@
 .navbar-search {
-  // Undo some of Blacklight's extending of column classes.
   .search-query-form {
-    flex-basis: auto !important;
-    max-width: 100% !important;
-  }
-}
+    max-width: 100% !important;   // work around blacklight styles
+    display: flex;
+    gap: .5rem;
 
-.within-collection-dropdown {
-  flex-basis: calc(20ch + 2rem);
-  flex-basis: max-content;
-  min-width: 0;
+    // wrap collection dropdown onto its own line on smaller screens
+    @include media-breakpoint-down(md) {
+      flex-wrap: wrap;
+    }
 
-  @include media-breakpoint-up(sm) {
-    width: 50% !important;
-  }
+    .input-group {
+      width: unset;
+      flex: auto;
+    }
 
-  @include media-breakpoint-up(lg) {
-    min-width: 0;
+    .within-collection-dropdown {
+      flex: none;
+    }
   }
 }
 
@@ -25,7 +25,7 @@
     display: block;
     font-size: $h2-font-size;
     margin: 0;
-    padding: ($spacer * 1.5) ($spacer / 2);
+    padding: ($spacer * 1.5) ($spacer * 0.5);
   }
 
   .navbar-nav {
@@ -40,7 +40,7 @@
   + .navbar-search {
     border-bottom: $default-border-styling;
     border-top: $default-border-styling;
-    margin-bottom: ($spacer / 2);
+    margin-bottom: ($spacer * 0.5);
 
     a {
       font-weight: $font-weight-bold;
@@ -64,9 +64,7 @@
     .nav-links {
       justify-content: center !important;
     }
-  }
 
-  @media (max-width: 992px) {
     h1,
     + .navbar-search {
       text-align: center;

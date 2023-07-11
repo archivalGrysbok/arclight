@@ -2,12 +2,12 @@
 
 require 'spec_helper'
 
-describe 'Document Tools', type: :feature do
+describe 'Document Tools' do
   context 'in search results' do
     it 'renders the bookmark option for all documents' do
       visit search_catalog_path q: '', search_field: 'all_fields'
 
-      expect(page).to have_css('.al-search-result-index-article form.bookmark-toggle', count: 10)
+      expect(page).to have_css('article form.bookmark-toggle', count: 10)
     end
   end
 

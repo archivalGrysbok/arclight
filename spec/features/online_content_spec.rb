@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe 'Online Content', type: :feature do
+RSpec.describe 'Online Content' do
   let(:doc_id) { 'aoa271aspace_843e8f9f22bac69872d0802d6fffbb04' }
 
   before { visit solr_document_path(id: doc_id) }
@@ -13,8 +13,8 @@ RSpec.describe 'Online Content', type: :feature do
 
       it 'renders digital object viewer initialization markup', js: true do
         expect(page).to have_css(
-          '.al-oembed-viewer[data-arclight-oembed-url="http://purl.stanford.edu/kc844kt2526"]',
-          visible: false
+          '.al-oembed-viewer[data-arclight-oembed-url-value="http://purl.stanford.edu/kc844kt2526"]',
+          visible: :all
         )
       end
     end

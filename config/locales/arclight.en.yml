@@ -1,12 +1,17 @@
 ---
 en:
   arclight:
-    breadcrumb_separator: " » "
     breadcrumbs:
       aria_label: breadcrumb
+    collection_info_component:
+      collection_id: Collection ID
+      last_indexed: Last indexed
+      more_info: More info
+      online_items: Items available online
+      total_components: Total components
     hierarchy:
       view_all: View
-    masthead_heading: Archival Collections at Institution
+    masthead_heading_html: Archival Collections at Institution
     repositories: Repositories
     request:
       container: Request
@@ -20,8 +25,8 @@ en:
       repository_header: 'Collections : [%{repository}]'
     show_breadcrumb_label: Repository
     truncation:
-      view_less: view less ▼
-      view_more: view more ▶
+      view_less: view less
+      view_more: view more
     views:
       index:
         all_group_results: view all %{count}
@@ -48,8 +53,6 @@ en:
         view_all_collections: View all of our collections
         view_more: View more
       show:
-        access: Access
-        collapse: Collapse
         collection_id: 'Collection ID: %{id}'
         contents: Contents
         context: Collection context
@@ -57,30 +60,31 @@ en:
           title: Collection overview
         download:
           default: Download
-          ead: Download EAD
-          pdf: Download finding aid
-        download_with_size:
-          default: Download (%{size})
-          ead: Download EAD (%{size})
-          pdf: Download finding aid (%{size})
+          multiple:
+            ead: EAD
+            pdf: Finding aid
+          single:
+            ead: Download EAD
+            pdf: Download finding aid
         embedded_content: Online content
         expand: Expand
         has_content: Collection contents
         online_content:
           description: Some materials from this collection are available online.
-          link_text: Show only online content.
+          link_text: Show only online content
           title: Online content
         our_collections: Our Collections
         sections:
-          access_field: Access and Use
+          access_field: Access and use
           background_field: Background
-          collection_context_field: Collection Context
+          collection_context_field: Collection context
           component_field: About this %{level}
-          component_indexed_terms_field: Indexed Terms
-          indexed_terms_field: Indexed Terms
+          component_indexed_terms_field: Indexed terms
+          indexed_terms_field: Indexed terms
           related_field: Related
-          scope_and_arrangement_field: Scope and Arrangement
+          scope_and_arrangement_field: Scope and arrangement
           summary_field: Summary
+        toggle_sidebar: Navigate the collection
     within_collection_dropdown:
       all_collections: all collections
       label_html: Search<span class="sr-only visually-hidden"> within</span>
@@ -88,7 +92,7 @@ en:
   blacklight:
     entry_name:
       grouped:
-        collection_ssi: collection
+        _root_: collections
     search:
       pagination_info:
         pages:

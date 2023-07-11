@@ -2,17 +2,17 @@
 
 require 'spec_helper'
 
-RSpec.describe 'arclight/_requests', type: :view do
+RSpec.describe 'arclight/_requests' do
   let(:document) { SolrDocument.new(id: 'abc123') }
   let(:config) { instance_double(Arclight::Repository) }
   let(:blacklight_config) { Blacklight::Configuration.new }
 
   before do
     allow(document).to receive(:repository_config).and_return(config)
+    allow(document).to receive(:requestable?).and_return(true)
     allow(view).to receive(:blacklight_config).and_return(blacklight_config)
     allow(view).to receive(:action_name).and_return('show')
     allow(view).to receive(:document).and_return(document)
-    allow(view).to receive(:item_requestable?).and_return(true)
   end
 
   context 'with EAD documents which require Aeon requests' do
@@ -29,8 +29,8 @@ RSpec.describe 'arclight/_requests', type: :view do
     end
 
     it 'renders links to the Aeon request form' do
-      expect(rendered).to have_css '.al-show-actions-box-request'
-      expect(rendered).to have_css '.al-show-actions-box-request a[href^="https://sample.request.com"]'
+      expect(rendered).to have_css '.al-request'
+      expect(rendered).to have_css '.al-request a[href^="https://sample.request.com"]'
     end
   end
 

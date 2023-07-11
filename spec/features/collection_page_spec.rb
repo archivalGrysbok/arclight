@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe 'Collection Page', type: :feature do
+RSpec.describe 'Collection Page' do
   let(:doc_id) { 'aoa271' }
   let(:download_config) do
     ActiveSupport::HashWithIndifferentAccess.new(
@@ -35,7 +35,7 @@ RSpec.describe 'Collection Page', type: :feature do
   describe 'online content indicator' do
     context 'when there is online content available' do
       it 'is rendered' do
-        expect(page).to have_css('.alert', text: 'Online content')
+        expect(page).to have_css('.card', text: 'Online content')
       end
     end
 
@@ -43,7 +43,7 @@ RSpec.describe 'Collection Page', type: :feature do
       let(:doc_id) { 'm0198-xml' }
 
       it 'is not rendered' do
-        expect(page).not_to have_css('.alert', text: 'Online content')
+        expect(page).not_to have_css('.card', text: 'Online content')
       end
     end
   end
@@ -63,22 +63,22 @@ RSpec.describe 'Collection Page', type: :feature do
     end
 
     it 'html-formatted notes render with paragraphs intact' do
-      within 'dd.blacklight-bioghist_ssm' do
+      within 'dd.blacklight-bioghist' do
         expect(page).to have_css('p', count: 4)
         expect(page).to have_css('p', text: /^Alpha Omega Alpha Honor Medical Society was founded/)
         expect(page).to have_css('p', text: /^Root and his fellow medical students/)
       end
-      within 'dd.blacklight-abstract_ssm' do
+      within 'dd.blacklight-abstract' do
         expect(page).to have_css('p', count: 2)
       end
     end
 
     it 'background has configured metadata' do
       within '#background' do
-        expect(page).to have_css('dt', text: 'Scope and Content')
+        expect(page).to have_css('dt', text: 'Scope and content')
         expect(page).to have_css('dd', text: /^Correspondence, documents, records, photos/)
 
-        expect(page).to have_css('dt', text: 'Biographical / Historical')
+        expect(page).to have_css('dt', text: 'Biographical / historical')
         expect(page).to have_css('dd', text: /^Alpha Omega Alpha Honor Medical Society was founded/)
 
         expect(page).to have_css('dt', text: 'Acquisition information')
@@ -145,7 +145,7 @@ RSpec.describe 'Collection Page', type: :feature do
         click_link name
       end
 
-      within '.blacklight-names_ssim.facet-limit-active' do
+      within '.blacklight-names.facet-limit-active' do
         expect(page).to have_css('.facet-label .selected', text: name)
       end
     end
@@ -165,7 +165,7 @@ RSpec.describe 'Collection Page', type: :feature do
         expect(page).to have_link 'Summary', href: /#summary/
         expect(page).to have_link 'Background', href: /#background/
         expect(page).to have_link 'Related', href: /#related/
-        expect(page).to have_link 'Indexed Terms', href: /#indexed-terms/
+        expect(page).to have_link 'Indexed terms', href: /#indexed-terms/
       end
     end
 
@@ -196,7 +196,11 @@ RSpec.describe 'Collection Page', type: :feature do
             within '#aoa271aspace_dc2aaf83625280ae2e193beb3f4aea78.al-collection-context' do
               expect(page).to have_link 'Constitution and by-laws'
             end
+            click_link 'Expand'
             expect(page).to have_link 'Reports'
+            el = find_by_id('aoa271aspace_238a0567431f36f49acea49ef576d408')
+            evaluate_script "window.scrollTo(0,#{el.rect.y - 100})"
+            sleep 1
             within '#aoa271aspace_238a0567431f36f49acea49ef576d408' do
               click_link 'View'
               expect(page).to have_link 'Expansion Plan'
@@ -243,8 +247,9 @@ RSpec.describe 'Collection Page', type: :feature do
 
     it 'renders links to the files for download' do
       within '.al-show-actions-box-downloads-container' do
-        expect(page).to have_link 'Download finding aid (1.23MB)'
-        expect(page).to have_link 'Download EAD (123456)'
+        click_button 'Download'
+        expect(page).to have_link 'Finding aid'
+        expect(page).to have_link 'EAD'
       end
     end
   end
@@ -258,10 +263,8 @@ RSpec.describe 'Collection Page', type: :feature do
       let(:doc_id) { 'm0198-xmlaspace_ref11_d0s' }
 
       it 'renders links to the Aeon request form' do
-        within '.al-show-actions-box' do
-          expect(page).to have_css '.al-show-actions-box-request'
-          expect(page).to have_css '.al-show-actions-box-request a[href^="https://sample.request.com"]'
-        end
+        expect(page).to have_css '.al-request'
+        expect(page).to have_css '.al-request a[href^="https://sample.request.com"]'
       end
     end
   end

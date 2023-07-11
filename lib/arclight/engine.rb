@@ -8,6 +8,7 @@ require 'arclight/normalized_date'
 require 'arclight/normalized_id'
 require 'arclight/normalized_title'
 require 'arclight/digital_object'
+require 'gretel'
 
 module Arclight
   ##
@@ -17,14 +18,14 @@ module Arclight
 
     Arclight::Engine.config.catalog_controller_group_query_params = {
       group: true,
-      'group.field': 'collection_ssi',
+      'group.field': '_root_',
       'group.ngroups': true,
       'group.limit': 3,
-      fl: '*,parent:[subquery]',
-      'parent.fl': '*',
-      'parent.q': '{!term f=collection_sim v=$row.collection_ssi}',
-      'parent.fq': '{!term f=level_sim v="Collection"}',
-      'parent.defType': 'lucene'
+      fl: '*,collection:[subquery]',
+      'collection.q': '{!terms f=id v=$row._root_}',
+      'collection.defType': 'lucene',
+      'collection.fl': '*',
+      'collection.rows': 1
     }
 
     initializer 'arclight.helpers' do
@@ -35,11 +36,12 @@ module Arclight
 
     initializer 'arclight.assets', before: 'assets' do |app|
       app.config.assets.precompile << 'arclight/arclight.js'
-      app.config.assets.precompile << 'arclight/collection_navigation.js'
-      app.config.assets.precompile << 'arclight/context_navigation.js'
-      app.config.assets.precompile << 'arclight/oembed_viewer.js'
-      app.config.assets.precompile << 'arclight/truncator.js'
-      app.config.assets.precompile << 'arclight/responsiveTruncator.js'
+      app.config.assets.precompile << 'arclight/oembed_controller.js'
+      app.config.assets.precompile << 'arclight/truncate_controller.js'
+    end
+
+    initializer 'arclight.importmap', before: 'importmap' do |app|
+      app.config.importmap.paths << Engine.root.join('config/importmap.rb') if app.config.respond_to?(:importmap)
     end
   end
 end

@@ -4,7 +4,30 @@ module Arclight
   ##
   # Extends Blacklight::Solr::Document to provide Arclight specific behavior
   module SolrDocument
-    include Blacklight::Solr::Document
+    extend ActiveSupport::Concern
+
+    included do
+      attribute :parent_ids, :array, 'parent_ssim'
+      attribute :parent_labels, :array, 'parent_unittitles_ssm'
+      attribute :parent_levels, :array, 'parent_levels_ssm'
+      attribute :unitid, :string, 'unitid_ssm'
+      attribute :extent, :string, 'extent_ssm'
+      attribute :abstract, :string, 'abstract_html_tesm'
+      attribute :scope, :string, 'scopecontent_html_tesm'
+      attribute :creator, :string, 'creator_ssm'
+      attribute :level, :string, 'level_ssm'
+      attribute :terms, :string, 'userestrict_html_tesm'
+      # Restrictions for component sidebar
+      attribute :parent_restrictions, :string, 'parent_access_restrict_tesm'
+      # Terms for component sidebar
+      attribute :parent_terms, :string, 'parent_access_terms_tesm'
+      attribute :reference, :string, 'ref_ssm'
+      attribute :normalized_title, :string, 'normalized_title_ssm'
+      attribute :normalized_date, :string, 'normalized_date_ssm'
+      attribute :total_component_count, :string, 'total_component_count_is'
+      attribute :online_item_count, :string, 'online_item_count_is'
+      attribute :last_indexed, :date, 'timestamp'
+    end
 
     def repository_config
       return unless repository
@@ -12,74 +35,50 @@ module Arclight
       @repository_config ||= Arclight::Repository.find_by(name: repository)
     end
 
-    def collection
-      return self if collection?
-
-      SolrDocument.find(normalized_eadid)
-    end
-
     def parents
       @parents ||= Arclight::Parents.from_solr_document(self).as_parents
     end
 
-    def parent_ids
-      fetch('parent_ssim', [])
-    end
-
-    def parent_labels
-      fetch('parent_unittitles_ssm', [])
-    end
-
-    def parent_levels
-      fetch('parent_levels_ssm', [])
-    end
-
-    def parent_document
-      self.class.new fetch('parent').fetch('docs', []).first
-    end
-
+    # Get this document's EAD ID, or fall back to the collection (especially
+    # for components that may not have their own.
     def eadid
-      fetch('ead_ssi', nil)&.strip
+      first('ead_ssi')&.strip || collection&.first('ead_ssi')&.strip
     end
 
     def normalized_eadid
       Arclight::NormalizedId.new(eadid).to_s
     end
 
-    def unitid
-      first('unitid_ssm')
-    end
-
     def repository
-      first('repository_ssm')
+      first('repository_ssm') || collection&.first('repository_ssm')
     end
 
     def repository_and_unitid
       [repository, unitid].compact.join(': ')
     end
 
+    # @return [SolrDocument] a SolrDocument representing the EAD collection
+    #   that this document belongs to
+    def collection
+      return self if collection?
+
+      @collection ||= self.class.new(self['collection']&.dig('docs', 0), @response)
+    end
+
     def collection_name
-      first('collection_ssm')
+      collection&.normalized_title
     end
 
     def collection_unitid
-      first('collection_unitid_ssm')
-    end
-
-    def extent
-      first('extent_ssm')
+      collection&.unitid
     end
 
     def abstract_or_scope
-      first('abstract_ssm') || first('scopecontent_ssm')
-    end
-
-    def creator
-      first('creator_ssm')
+      abstract || scope
     end
 
     def collection_creator
-      first('collection_creator_ssm')
+      collection&.creator
     end
 
     def online_content?
@@ -87,41 +86,19 @@ module Arclight
     end
 
     def number_of_children
-      first('child_component_count_isim') || 0
+      first('child_component_count_isi') || 0
     end
 
     def children?
       number_of_children.positive?
     end
 
-    def reference
-      first('ref_ssm')
-    end
-
     def component_level
       first('component_level_isim')
     end
 
-    def level
-      first('level_ssm')
-    end
-
     def collection?
-      level.parameterize == 'collection'
-    end
-
-    def terms
-      first('userestrict_ssm')
-    end
-
-    # Restrictions for component sidebar
-    def parent_restrictions
-      first('parent_access_restrict_ssm')
-    end
-
-    # Terms for component sidebar
-    def parent_terms
-      first('parent_access_terms_ssm')
+      level&.parameterize == 'collection'
     end
 
     def digital_objects
@@ -138,22 +115,9 @@ module Arclight
       fetch('containers_ssim', []).map(&:capitalize)
     end
 
-    def normalized_title
-      first('normalized_title_ssm')
-    end
-
-    def normalized_date
-      first('normalized_date_ssm')
-    end
-
     # @return [Array<String>] with embedded highlights using <em>...</em>
     def highlights
-      highlight_response = response[:highlighting]
-      return if highlight_response.blank? ||
-                highlight_response[id].blank? ||
-                highlight_response[id][:text].blank?
-
-      highlight_response[id][:text].map(&:html_safe)
+      highlight_field(CatalogController.blacklight_config.highlight_field)
     end
 
     # Factory method for constructing the Object modeling downloads
@@ -169,6 +133,18 @@ module Arclight
           file.type == 'ead'
         end
       end
+    end
+
+    def nest_path
+      self['_nest_path_']
+    end
+
+    def root
+      self['_root_'] || self['id']
+    end
+
+    def requestable?
+      repository_config&.request_types&.any?
     end
   end
 end
