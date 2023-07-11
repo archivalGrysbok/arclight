@@ -72,7 +72,7 @@ RSpec.describe Arclight::DocumentDownloads do
     context 'when a template is provided for the href' do
       before do
         allow(document).to receive(:repository_config).and_return(
-          instance_double('Arclight::Repository', slug: 'the-repo-id')
+          Arclight::Repository.new(slug: 'the-repo-id')
         )
       end
 
@@ -80,7 +80,7 @@ RSpec.describe Arclight::DocumentDownloads do
         {
           data: {
             'size' => '1.23MB',
-            'template' => 'http://example.com/%{repository_id}/%{level}/%{terms}/download.pdf'
+            'template' => 'http://example.com/%<repository_id>s/%<level>s/%<terms>s/download.pdf'
           }
         }
       end
@@ -102,7 +102,7 @@ RSpec.describe Arclight::DocumentDownloads do
           {
             data: {
               'size' => '1.23MB',
-              'template' => '%{reference}'
+              'template' => '%<reference>s'
             }
           }
         end

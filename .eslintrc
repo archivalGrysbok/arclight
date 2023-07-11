@@ -2,14 +2,22 @@
   "env": {
     "es6": true
   },
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
   "extends": "airbnb-base/legacy",
   "globals": {
     "jQuery": true,
     "$": true,
-    "Blacklight": true
+    "Blacklight": true,
+    "bootstrap": true
   },
   "rules": {
     "no-param-reassign": [2, { "props": false }],
-    "func-names": ["error", "never"]
+    "func-names": ["error", "never"],
+    "indent": ["warn"],
+    "quotes": ["error", "single", { "avoidEscape": true }],
+    "semi": ["warn", "never"]
   }
 }

@@ -6,17 +6,20 @@ RSpec.describe Arclight::Requests::AeonWebEad do
   subject(:valid_object) { described_class.new(document, 'http://example.com/sample.xml') }
 
   let(:config) do
-    instance_double 'Arclight::Repository',
-                    request_url_for_type: 'https://sample.request.com',
-                    request_mappings_for_type: 'Action=10&Form=31&Value=ead_url'
+    instance_double Arclight::Repository,
+                    request_config_for_type: {
+                      request_url: 'https://sample.request.com',
+                      request_mappings: 'Action=10&Form=31&Value=ead_url'
+                    }.with_indifferent_access
   end
-  let(:document) { instance_double 'Blacklight::SolrDocument', repository_config: config }
+  let(:document) { instance_double SolrDocument, repository_config: config }
 
   describe '#request_url' do
     it 'returns from the repository config' do
       expect(valid_object.request_url).to eq 'https://sample.request.com'
     end
   end
+
   describe '#url' do
     it 'constructs a url with params' do
       expect(valid_object.url).to eq 'https://sample.request.com?Action=10&Form=31&Value=http%3A%2F%2Fexample.com%2Fsample.xml'

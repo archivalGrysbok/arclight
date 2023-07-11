@@ -2,7 +2,6 @@
 
 ENV['RAILS_ENV'] ||= 'test'
 ENV['REPOSITORY_FILE'] ||= 'spec/fixtures/config/repositories.yml'
-SPEC_ROOT = Pathname.new(__dir__)
 
 require 'simplecov'
 SimpleCov.start do
@@ -31,11 +30,15 @@ Capybara.register_driver :headless_chrome do |app|
   Capybara::Selenium::Driver.new(app, browser: :chrome, options: browser_options)
 end
 
-Capybara.default_max_wait_time = 25 # our ajax responses are sometimes slow
+Capybara.default_max_wait_time = 5 # our ajax responses are sometimes slow
 
 Capybara.enable_aria_label = true
 
 require 'arclight'
+
+# Requires supporting ruby files with custom matchers and macros, etc,
+# in spec/support/ and its subdirectories.
+Dir[Pathname.new(File.expand_path('support/**/*.rb', __dir__))].each { |f| require f }
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -44,6 +47,12 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
+
+  config.infer_spec_type_from_file_location!
+
+  config.include ViewComponent::TestHelpers, type: :component
+  config.before(:each, type: :helper) { helper.extend ControllerLevelHelpers }
+  config.before(:each, type: :view) { view.extend ControllerLevelHelpers }
 end
 
 # Provide a custom matcher that makes it easier to deal with pretty-printed

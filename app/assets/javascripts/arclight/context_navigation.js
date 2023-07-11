@@ -133,23 +133,28 @@ class ContextNavigation {
   }
 
   getData() {
-    const that = this;
     // Add a placeholder so flashes of text are not as significant
     const placeholder = new Placeholder();
     this.el.after(placeholder.$el);
-    $.ajax({
-      url: this.data.arclight.path,
-      data: {
-        'f[component_level_isim][]': this.data.arclight.level,
-        'f[has_online_content_ssim][]': this.data.arclight.access,
-        'f[collection_sim][]': this.data.arclight.name,
-        'f[parent_ssi][]': this.requestParent,
-        search_field: this.data.arclight.search_field,
-        original_parents: this.data.arclight.originalParents,
-        original_document: this.originalDocument,
-        view: 'collection_context'
-      }
-    }).done((response) => that.updateView(response));
+
+    const params = new URLSearchParams({
+      'f[component_level_isim][]': this.data.arclight.level,
+      'f[collection_sim][]': this.data.arclight.name,
+      'f[parent_ssi][]': this.requestParent,
+      original_document: this.originalDocument,
+      view: 'collection_context'
+    });
+    if (this.data.arclight.access) {
+      params.append('f[has_online_content_ssim][]', this.data.arclight.access);
+    }
+    if (this.data.arclight.search_field) {
+      params.append('search_field', this.data.arclight.search_field);
+    }
+    this.data.arclight.originalParents?.forEach((value, i) => params.append(`original_parents[${i}]`, value));
+
+    fetch(this.data.arclight.path + '&' + params)
+      .then((response) => response.text())
+      .then((data) => this.updateView(data));
   }
 
   /**
@@ -212,7 +217,6 @@ class ContextNavigation {
    *   each resulting Solr Document
    */
   updateParents(newDocs) {
-    const that = this;
     // Case where this is a parent list and needs to be filed correctly
     //
     // Otherwise, retrieve the parent...
@@ -260,9 +264,9 @@ class ContextNavigation {
     this.el.html(this.ul);
 
     // Initialize additional things
-    $itemDoc.find('.context-navigator').each(function (i, e) {
+    $itemDoc[0].querySelectorAll('[data-controller="arclight-context-navigation"]').forEach((element) => {
       const contextNavigation = new ContextNavigation(
-        e, that.originalParents, that.originalDocument
+        element, this.originalParents, this.originalDocument
       );
       contextNavigation.getData();
     });
@@ -277,17 +281,14 @@ class ContextNavigation {
    * @param {string} response - the AJAX response body
    */
   updateView(response) {
-    const that = this;
-    var resp = $.parseHTML(response);
-    var $doc = $(resp);
-    var newDocs = $doc.find('#documents')
-      .find('article')
-      .toArray().map(el => new NavigationDocument(el));
+    const parser = new DOMParser();
+    const html = parser.parseFromString(response, 'text/html');
+    const newDocs = Array.from(html.querySelectorAll('#documents article'))
+      .map(el => new NavigationDocument(el));
 
     // See if the original document is located in the returned documents
-    const originalDocumentIndex = newDocs
-      .findIndex(doc => doc.id === that.originalDocument);
-    that.parentLi.find('.al-hierarchy-placeholder').remove();
+    const originalDocumentIndex = newDocs.findIndex(doc => doc.id === this.originalDocument);
+    this.parentLi.find('.al-hierarchy-placeholder').remove();
 
     // If the original document in the results, update it. If not update with a
     // more complex procedure
@@ -296,39 +297,33 @@ class ContextNavigation {
     } else {
       this.updateParents(
         newDocs,
-        that.data.arclight.originalParents,
-        that.data.arclight.parent,
-        that.parentLi
+        this.data.arclight.originalParents,
+        this.data.arclight.parent,
+        this.parentLi
       );
     }
     this.el.parent().data('resolved', true);
     this.addListenersForPlusMinus();
-    this.enablebuttons();
-    Blacklight.doBookmarkToggleBehavior();
     this.el.trigger('navigation.contains.elements');
   }
 
   // eslint-disable-next-line class-methods-use-this
-  enablebuttons() {
-    var toEnable = $('[data-hierarchy-enable-me]');
-    var srOnly = $('h2[data-sr-enable-me]');
-    toEnable.removeClass('disabled');
-    toEnable.text(srOnly.data('hasContents'));
-    srOnly.text(srOnly.data('hasContents'));
+  findTarget(name) {
+    return document.querySelector(`[data-arclight-context-navigation-target="${name}"`);
   }
 
   addListenersForPlusMinus() {
-    const that = this;
     this.ul.find('.al-toggle-view-children').on('click', (e) => {
       e.preventDefault();
       const targetArea = $($(e.currentTarget).attr('href'));
       if (!targetArea.data('resolved') === true) {
-        targetArea.find('.context-navigator').each((i, ee) => {
+        const areaTag = targetArea[0];
+        areaTag.querySelectorAll('[data-controller="arclight-context-navigation"]').forEach((element) => {
           const contextNavigation = new ContextNavigation(
             // Send null for originalParents. We want to disregard the original
             // component's ancestor trail and instead use the current ID as the
             // parent in the query to populate the navigator.
-            ee, null, that.originalDocument
+            element, null, this.originalDocument
           );
           contextNavigation.getData();
         });
@@ -342,9 +337,11 @@ class ContextNavigation {
  *
  */
 Blacklight.onLoad(function () {
-  $('.context-navigator').each(function (i, e) {
+  document.querySelectorAll('[data-controller="arclight-context-navigation"]').forEach((element) => {
     const contextNavigation = new ContextNavigation(
-        e, $(this).data('arclight').originalParents, $(this).data('arclight').originalDocument
+        element,
+        $(element).data('arclight').originalParents,
+        $(element).data('arclight').originalDocument
       );
     contextNavigation.getData();
   });

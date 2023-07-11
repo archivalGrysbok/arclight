@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe 'arclight/_requests.html.erb', type: :view do
+RSpec.describe 'arclight/_requests', type: :view do
   let(:document) { SolrDocument.new(id: 'abc123') }
   let(:config) { instance_double(Arclight::Repository) }
   let(:blacklight_config) { Blacklight::Configuration.new }
@@ -10,6 +10,7 @@ RSpec.describe 'arclight/_requests.html.erb', type: :view do
   before do
     allow(document).to receive(:repository_config).and_return(config)
     allow(view).to receive(:blacklight_config).and_return(blacklight_config)
+    allow(view).to receive(:action_name).and_return('show')
     allow(view).to receive(:document).and_return(document)
     allow(view).to receive(:item_requestable?).and_return(true)
   end
@@ -19,10 +20,11 @@ RSpec.describe 'arclight/_requests.html.erb', type: :view do
 
     before do
       allow(document_downloads).to receive(:href).and_return('https://sample.request.com')
-      allow(view).to receive(:ead_files).and_return(document_downloads)
+      allow(document).to receive(:ead_file).and_return(document_downloads)
       allow(config).to receive(:available_request_types).and_return([:aeon_web_ead])
-      allow(config).to receive(:request_url_for_type).and_return('https://sample.request.com')
-      allow(config).to receive(:request_mappings_for_type).and_return('Action=10&Form=31&Value=ead_url')
+      allow(config).to receive(:request_config_for_type).and_return({ 'request_url' => 'https://sample.request.com',
+                                                                      'request_mappings' => 'Action=10&Form=31&Value=ead_url' })
+
       render
     end
 

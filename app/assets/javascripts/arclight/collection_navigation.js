@@ -1,7 +1,4 @@
-(function (global) {
-  var CollectionNavigation;
-
-  CollectionNavigation = {
+  const CollectionNavigation = {
     init: function (el, page = 1) {
       var $el = $(el);
       var data = $el.data();
@@ -43,7 +40,7 @@
             $(
               '<span class="badge badge-pill badge-secondary al-online-content-badge">'
                 + numberEntries
-                + '<span class="sr-only">components</span></span>'
+                + '<span class="sr-only visually-hidden">components</span></span>'
             )
           );
         }
@@ -66,35 +63,25 @@
         if (showDocs.length > 0) {
           $el.trigger('navigation.contains.elements');
         }
-        Blacklight.doBookmarkToggleBehavior();
       });
     }
   };
 
-  global.CollectionNavigation = CollectionNavigation;
-}(this));
+  Blacklight.onLoad(function () {
+    'use strict';
 
-Blacklight.onLoad(function () {
-  'use strict';
+    $('.al-contents').each(function (i, element) {
+      CollectionNavigation.init(element); // eslint-disable-line no-undef
+    });
 
-  $('.al-contents').each(function (i, element) {
-    CollectionNavigation.init(element); // eslint-disable-line no-undef
-  });
-
-  $('.al-contents').on('navigation.contains.elements', function (e) {
-    var toEnable = $('[data-hierarchy-enable-me]');
-    var srOnly = $('h2[data-sr-enable-me]');
-    toEnable.removeClass('disabled');
-    toEnable.text(srOnly.data('hasContents'));
-    srOnly.text(srOnly.data('hasContents'));
-
-    $(e.target).find('.collapse').on('show.bs.collapse', function (ee) {
-      var $newTarget = $(ee.target);
-      $newTarget.find('.al-contents').each(function (i, element) {
-        CollectionNavigation.init(element); // eslint-disable-line no-undef
+    $('.al-contents').on('navigation.contains.elements', function (e) {
+      $(e.target).find('.collapse').on('show.bs.collapse', function (ee) {
+        var $newTarget = $(ee.target);
+        $newTarget.find('.al-contents').each(function (i, element) {
+          CollectionNavigation.init(element); // eslint-disable-line no-undef
         // Turn off additional ajax requests on show
-        $newTarget.off('show.bs.collapse');
+          $newTarget.off('show.bs.collapse');
+        });
       });
     });
   });
-});

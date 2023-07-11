@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
+# Blacklight controller that handles searches and document requests
 class CatalogController < ApplicationController
   include Blacklight::Catalog
   include Arclight::Catalog
-  include Arclight::FieldConfigHelpers
 
   configure_blacklight do |config|
     ## Class for sending and receiving requests from a search index
@@ -37,29 +37,71 @@ class CatalogController < ApplicationController
     #  # q: '{!term f=id v=$id}'
     # }
 
-    # solr field configuration for search results/index views
-    config.index.title_field = 'normalized_title_ssm'
-    config.index.display_type_field = 'level_ssm'
-    # config.index.thumbnail_field = 'thumbnail_path_ss'
-
-    # solr field configuration for document/show views
-    # config.show.title_field = 'title_display'
-    config.show.display_type_field = 'level_ssm'
-    # config.show.thumbnail_field = 'thumbnail_path_ss'
 
     config.add_results_document_tool(:bookmark, partial: 'bookmark_control', if: :render_bookmarks_control?)
 
+    config.add_results_collection_tool(:group_toggle)
     config.add_results_collection_tool(:sort_widget)
     config.add_results_collection_tool(:per_page_widget)
     config.add_results_collection_tool(:view_type_group)
 
-    config.add_show_tools_partial(:bookmark, partial: 'bookmark_control', if: :render_bookmarks_control?)
-    config.add_show_tools_partial(:email, callback: :email_action, validator: :validate_email_params)
-    config.add_show_tools_partial(:sms, if: :render_sms_action?, callback: :sms_action, validator: :validate_sms_params)
-    config.add_show_tools_partial(:citation)
-
     config.add_nav_action(:bookmark, partial: 'blacklight/nav/bookmark', if: :render_bookmarks_control?)
     config.add_nav_action(:search_history, partial: 'blacklight/nav/search_history')
+
+    # solr field configuration for search results/index views
+    config.index.partials = %i[arclight_index_default]
+    config.index.title_field = 'normalized_title_ssm'
+    config.index.display_type_field = 'level_ssm'
+    config.index.document_component = Arclight::SearchResultComponent
+    config.index.group_component = Arclight::GroupComponent
+    config.index.constraints_component = Arclight::ConstraintsComponent
+    config.index.document_presenter_class = Arclight::IndexPresenter
+    config.add_results_document_tool :arclight_bookmark_control, partial: 'arclight_bookmark_control'
+    config.index.search_bar_component = Arclight::SearchBarComponent
+    config.index.document_actions.delete(:bookmark)
+    # config.index.thumbnail_field = 'thumbnail_path_ss'
+
+    # solr field configuration for document/show views
+    # config.show.title_field = 'title_display'
+    config.show.document_component = Arclight::DocumentComponent
+    config.show.embed_component = Arclight::EmbedComponent
+    config.show.display_type_field = 'level_ssm'
+    # config.show.thumbnail_field = 'thumbnail_path_ss'
+    config.show.document_presenter_class = Arclight::ShowPresenter
+    config.show.metadata_partials = %i[
+      summary_field
+      access_field
+      background_field
+      related_field
+      indexed_terms_field
+    ]
+
+    config.show.context_access_tab_items = %i[
+      terms_field
+      cite_field
+      in_person_field
+      contact_field
+    ]
+
+    config.show.component_metadata_partials = %i[
+      component_field
+      component_indexed_terms_field
+    ]
+
+    config.show.component_access_tab_items = %i[
+      component_terms_field
+      cite_field
+      in_person_field
+      contact_field
+    ]
+
+    ##
+    # Collection Context
+    config.view.collection_context(display_control: false, document_component: Arclight::DocumentCollectionContextComponent)
+
+    ##
+    # Compact index view
+    config.view.compact!
 
     # solr fields that will be treated as facets by the blacklight application
     #   The ordering of the field names is the order of the display
@@ -109,16 +151,13 @@ class CatalogController < ApplicationController
 
     # solr fields to be displayed in the index (search results) view
     #   The ordering of the field names is the order of the display
-    config.add_index_field 'unitid_ssm', label: 'Unit ID'
-    config.add_index_field 'repository_ssm', label: 'Repository'
-    config.add_index_field 'normalized_date_ssm', label: 'Date'
-    config.add_index_field 'creator_ssm', label: 'Creator'
-    config.add_index_field 'language_ssm', label: 'Language'
-    config.add_index_field 'scopecontent_ssm', label: 'Scope Content', helper_method: :render_html_tags
-    config.add_index_field 'extent_ssm', label: 'Physical Description'
-    config.add_index_field 'accessrestrict_ssm', label: 'Conditions Governing Access', helper_method: :render_html_tags
-    config.add_index_field 'collection_ssm', label: 'Collection Title'
-    config.add_index_field 'geogname_ssm', label: 'Place'
+    config.add_index_field 'highlight', accessor: 'highlights', separator_options: {
+      words_connector: '<br/>',
+      two_words_connector: '<br/>',
+      last_word_connector: '<br/>'
+    }, compact: true
+    config.add_index_field 'creator', accessor: true
+    config.add_index_field 'abstract_or_scope', accessor: true, truncate: true, collection_context: true, repository_context: true, helper_method: :render_html_tags
 
     config.add_facet_field 'has_online_content_ssim', label: 'Access', query: {
       online: { label: 'Online access', fq: 'has_online_content_ssim:true' }
@@ -189,6 +228,10 @@ class CatalogController < ApplicationController
       }
     end
 
+    # These are the parameters passed through in search_state.params_for_search
+    config.search_state_fields += %i[id group hierarchy_context original_document]
+    config.search_state_fields << { original_parents: [] }
+
     # "sort results by" select (pulldown)
     # label in pulldown is followed by the name of the SOLR field to sort by and
     # whether the sort is ascending or descending (it must be asc or desc
@@ -209,49 +252,6 @@ class CatalogController < ApplicationController
     config.autocomplete_enabled = true
     config.autocomplete_path = 'suggest'
 
-    ##
-    # Arclight Configurations
-
-    config.show.document_presenter_class = Arclight::ShowPresenter
-    config.index.document_presenter_class = Arclight::IndexPresenter
-
-    ##
-    # Configuration for partials
-    config.index.partials = %i[arclight_index_default]
-
-    ##
-    # Configuration for index actions
-    config.index.document_actions << :containers
-    config.index.document_actions << :online_content_label
-    config.add_results_document_tool :arclight_bookmark_control, partial: 'arclight_bookmark_control'
-    config.index.document_actions.delete(:bookmark)
-
-    config.show.metadata_partials = %i[
-      summary_field
-      access_field
-      background_field
-      related_field
-      indexed_terms_field
-    ]
-
-    config.show.context_access_tab_items = %i[
-      terms_field
-      cite_field
-      in_person_field
-      contact_field
-    ]
-
-    config.show.component_metadata_partials = %i[
-      component_field
-      component_indexed_terms_field
-    ]
-
-    config.show.component_access_tab_items = %i[
-      component_terms_field
-      cite_field
-      in_person_field
-      contact_field
-    ]
 
     # ===========================
     # COLLECTION SHOW PAGE FIELDS
@@ -361,39 +361,16 @@ class CatalogController < ApplicationController
     config.add_component_terms_field 'parent_access_terms_ssm', label: 'Parent Terms of Access', helper_method: :render_html_tags
 
     # Collection and Component Show Page Access Tab - In Person Section
-    config.add_in_person_field 'repository_ssm', if: :repository_config_present, label: 'Location of this collection', helper_method: :context_access_tab_repository
-    config.add_in_person_field 'id', if: :before_you_visit_note_present, label: 'Before you visit', helper_method: :context_access_tab_visit_note # Using ID because we know it will always exist
+    config.add_in_person_field 'repository_location', values: ->(_, document, _) { document.repository_config }, label: 'Location of this collection', component: Arclight::RepositoryLocationComponent
+    config.add_in_person_field 'before_you_visit', values: ->(_, document, _) { document.repository_config&.visit_note }, label: 'Before you visit'
 
     # Collection and Component Show Page Access Tab - How to Cite Section
     config.add_cite_field 'prefercite_ssm', label: 'Preferred citation', helper_method: :render_html_tags
 
     # Collection and Component Show Page Access Tab - Contact Section
-    config.add_contact_field 'repository_ssm', if: :repository_config_present, label: 'Contact', helper_method: :access_repository_contact
+    config.add_contact_field 'repository_contact', values: ->(_, document, _) { document.repository_config&.contact }, label: 'Contact'
 
-    # Remove unused show document actions
-    %i[citation email sms].each do |action|
-      config.view_config(:show).document_actions.delete(action)
-    end
-
-    # Insert the breadcrumbs at the beginning
-    config.show.partials.unshift(:show_upper_metadata)
-    config.show.partials.unshift(:show_breadcrumbs)
-    config.show.partials.delete(:show_header)
-
-    ##
-    # Online Contents Index View
-    config.view.online_contents
-    config.view.online_contents.display_control = false
-
-    ##
-    # Collection Context
-    config.view.collection_context
-    config.view.collection_context.display_control = false
-    config.view.collection_context.partials = %i[index_collection_context]
-
-    ##
-    # Compact index view
-    config.view.compact
-    config.view.compact.partials = %i[arclight_index_compact]
+    # Group header values
+    config.add_group_header_field 'abstract_or_scope', accessor: true, truncate: true, helper_method: :render_html_tags
   end
 end

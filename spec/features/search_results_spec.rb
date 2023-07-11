@@ -93,13 +93,6 @@ RSpec.describe 'Search results', type: :feature do
           expect(page).to have_css('li .facet-label', text: 'Stanford University', visible: false)
         end
 
-        within('.blacklight-date_range_sim') do
-          expect(page).to have_css('h3 button', text: '')
-          click_button 'Date range'
-          expect(page).to have_css('.range_limit', visible: true)
-          expect(page).to have_css('.profile canvas.flot-base', visible: true)
-        end
-
         within('.blacklight-names_ssim') do
           expect(page).to have_css('h3 button', text: 'Names')
           expect(page).to have_css('li .facet-label', text: 'Department of Special Collections and University Archives', visible: false)
@@ -108,7 +101,7 @@ RSpec.describe 'Search results', type: :feature do
 
         within('.blacklight-repository_sim') do
           expect(page).to have_css('h3 button', text: 'Repository')
-          expect(page).to have_css('li .facet-label', text: 'National Library of Medicine. History of Medicine Division', visible: false) # rubocop: disable Metrics/LineLength
+          expect(page).to have_css('li .facet-label', text: 'National Library of Medicine. History of Medicine Division', visible: :hidden)
         end
 
         within('.blacklight-geogname_sim') do
@@ -154,6 +147,7 @@ RSpec.describe 'Search results', type: :feature do
       expect(page).not_to have_css('.al-repository-card')
     end
   end
+
   describe 'sorting' do
     it 'provides a dropdown with all the options' do
       visit search_catalog_path q: '', search_field: 'all_fields'

@@ -24,16 +24,6 @@ RSpec.describe 'Component Page', type: :feature do
     visit solr_document_path(id: doc_id)
   end
 
-  describe 'tabbed display' do
-    it 'clicking context toggles visibility', js: true do
-      expect(page).to have_css '#context', visible: true
-      expect(page).to have_css '#access', visible: false
-      click_link 'Access'
-      expect(page).to have_css '#context', visible: false
-      expect(page).to have_css '#access', visible: true
-    end
-  end
-
   describe 'label/title' do
     it 'does not double escape entities in the heading' do
       expect(page).to have_css('h1', text: /"A brief account of the origin of/)
@@ -75,7 +65,7 @@ RSpec.describe 'Component Page', type: :feature do
 
   describe 'direct online content items' do
     it 'includes links to online content' do
-      expect(page).to have_css('.al-digital-object.breadcrumb-item', text: 'Folder of digitized stuff')
+      expect(page).to have_css('.al-digital-object', text: 'Folder of digitized stuff')
     end
   end
 
@@ -109,8 +99,6 @@ RSpec.describe 'Component Page', type: :feature do
         )
         expect(page).to have_css('.al-number-of-children-badge', text: '25')
         expect(page).to have_css('.al-online-content-icon')
-        expect(page).to have_css('form.bookmark-toggle')
-        expect(page).to have_css '.al-document-container', text: 'Box 1, Folder 1'
       end
     end
 
@@ -128,6 +116,7 @@ RSpec.describe 'Component Page', type: :feature do
         end
       end
     end
+
     it 'supports clicks within collection context' do
       within '#collection-context' do
         click_link('Statements of purpose, c.1902')
@@ -136,7 +125,6 @@ RSpec.describe 'Component Page', type: :feature do
       within '#collection-context' do
         expect(page).to have_css 'li.al-hierarchy-highlight', text: 'Statements of purpose, c.1902'
         expect(page).to have_css '.document-title-heading', text: /"A brief account of the origin/
-        expect(page).to have_css '.al-document-container', text: 'Box 1, Folder 1'
         expect(page).to have_css(
           '.document-title-heading',
           text: 'Constitution - notes on drafting of constitution, c.1902-1903'
@@ -230,13 +218,11 @@ RSpec.describe 'Component Page', type: :feature do
 
   describe 'access tab', js: true do
     it 'has visitation notes' do
-      click_link 'Access'
       expect(page).to have_css 'dt', text: 'LOCATION OF THIS COLLECTION:'
       expect(page).to have_css 'dd', text: 'Building 38, Room 1E-21'
     end
 
     it 'has a restrictions and access' do
-      click_link 'Access'
       expect(page).to have_css 'dt', text: 'PARENT RESTRICTIONS:'
       expect(page).to have_css 'dd', text: /^RESTRICTED: Access to these folders requires prior written approval./
       expect(page).to have_css 'dt', text: 'TERMS OF ACCESS:'
@@ -244,7 +230,6 @@ RSpec.describe 'Component Page', type: :feature do
     end
 
     it 'has a contact' do
-      click_link 'Access'
       expect(page).to have_css 'dt', text: 'CONTACT:'
       expect(page).to have_css 'dd', text: 'hmdref@nlm.nih.gov'
     end
@@ -253,11 +238,11 @@ RSpec.describe 'Component Page', type: :feature do
   describe 'breadcrumb' do
     it 'links home, collection, and parents' do
       within '.al-show-breadcrumb' do
-        expect(page).to have_css 'a', text: 'Home'
-        expect(page).to have_css 'a', text: 'National Library of Medicine. History of Medicine Division'
-        expect(page).to have_css 'a', text: 'Alpha Omega Alpha Archives, 1894-1992'
-        expect(page).to have_css 'a', text: 'Series I: Administrative Records, 1902-1976, bulk 1975-1976'
-        expect(page).to have_css 'a', count: 4
+        expect(page).to have_link 'Home'
+        expect(page).to have_link 'National Library of Medicine. History of Medicine Division'
+        expect(page).to have_link 'Alpha Omega Alpha Archives, 1894-1992'
+        expect(page).to have_link 'Series I: Administrative Records, 1902-1976, bulk 1975-1976'
+        expect(page).to have_link count: 4
       end
     end
   end
@@ -267,8 +252,8 @@ RSpec.describe 'Component Page', type: :feature do
 
     it 'renders links to the files for download' do
       within '.al-show-actions-box-downloads-container' do
-        expect(page).to have_css('a', text: 'Download finding aid (1.23MB)')
-        expect(page).to have_css('a', text: 'Download EAD (123456)')
+        expect(page).to have_link 'Download finding aid (1.23MB)'
+        expect(page).to have_link 'Download EAD (123456)'
       end
     end
   end

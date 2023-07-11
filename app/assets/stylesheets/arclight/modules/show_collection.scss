@@ -1,16 +1,13 @@
 // Collection context
-.al-sticky-sidebar {
-  position: sticky;
-  top: 0;
-}
-
 .al-show-sub-heading {
   font-size: $h6-font-size;
   text-transform: uppercase;
+}
 
-  + dl > dt {
+#access, #metadata {
+  dl > dt {
     font-size: $font-size-sm;
-    margin-top: 4px;
+    margin-top: (1rem - $font-size-sm) / 2;
     text-transform: uppercase;
   }
 }
@@ -28,10 +25,6 @@ p.media .col {
 }
 // Access tab
 #access {
-  dl dt {
-    font-size: $font-size-sm;
-  }
-
   dl dd {
     line-height: 1.4;
     margin-bottom: $spacer;
@@ -45,8 +38,7 @@ p.media .col {
   }
 
   .al-in-person-repository-name,
-  .al-in-person-repository-location,
-  .al-in-person-repository-contact {
+  .al-in-person-repository-location {
     font-size: $font-size-sm;
     line-height: 1.25;
   }

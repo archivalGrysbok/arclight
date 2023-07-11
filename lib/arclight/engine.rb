@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'sprockets/bumble_d'
 require 'blacklight'
 require 'traject'
 require 'active_model'
@@ -9,37 +8,12 @@ require 'arclight/normalized_date'
 require 'arclight/normalized_id'
 require 'arclight/normalized_title'
 require 'arclight/digital_object'
-require 'arclight/viewer'
 
 module Arclight
   ##
   # This is the defining class for the Arclight Rails Engine
   class Engine < ::Rails::Engine
-    extend ::Sprockets::BumbleD::DSL
-
-    # We're not sure this is right, but we aren't doing module imports
-    # at the moment anyway
-    register_umd_globals :arclight,
-                         'blacklight' => 'Blacklight'
-
-    config.viewer_class = Arclight::Viewers::OEmbed
     config.oembed_resource_exclude_patterns = [/\.pdf$/, /\.ppt$/]
-
-    Arclight::Engine.config.catalog_controller_field_accessors = %i[
-      summary_field
-      access_field
-      contact_field
-      background_field
-      related_field
-      terms_field
-      cite_field
-      indexed_terms_field
-      in_person_field
-      component_field
-      online_field
-      component_terms_field
-      component_indexed_terms_field
-    ]
 
     Arclight::Engine.config.catalog_controller_group_query_params = {
       group: true,
@@ -53,14 +27,19 @@ module Arclight
       'parent.defType': 'lucene'
     }
 
-    initializer 'arclight.fields' do
-      Arclight::Engine.config.catalog_controller_field_accessors.each do |field|
-        Blacklight::Configuration.define_field_access field
+    initializer 'arclight.helpers' do
+      config.after_initialize do
+        ActiveSupport.on_load(:action_view) { include ArclightHelper }
       end
     end
 
-    initializer 'arclight.helpers' do
-      ActionView::Base.send :include, ArclightHelper
+    initializer 'arclight.assets', before: 'assets' do |app|
+      app.config.assets.precompile << 'arclight/arclight.js'
+      app.config.assets.precompile << 'arclight/collection_navigation.js'
+      app.config.assets.precompile << 'arclight/context_navigation.js'
+      app.config.assets.precompile << 'arclight/oembed_viewer.js'
+      app.config.assets.precompile << 'arclight/truncator.js'
+      app.config.assets.precompile << 'arclight/responsiveTruncator.js'
     end
   end
 end

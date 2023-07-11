@@ -15,6 +15,7 @@ RSpec.describe 'arclight/repositories/index', type: :view do
 
   context 'renders the three repository examples' do
     before { render }
+
     it 'has the header class' do
       expect(rendered).to have_css('.al-repositories', count: 1)
     end
@@ -40,7 +41,7 @@ RSpec.describe 'arclight/repositories/index', type: :view do
     end
 
     it 'has the correct contact information' do
-      expect(rendered).to have_css('.al-repository-contact-info-contact_info a @href', count: 3, text: /mailto:/)
+      expect(rendered).to have_css('.al-repository-contact-info a @href', count: 3, text: /mailto:/)
     end
 
     it 'handles a missing building' do
@@ -52,7 +53,7 @@ RSpec.describe 'arclight/repositories/index', type: :view do
     end
 
     it 'handles a missing phone' do
-      expect(rendered).to have_css('.al-repository-contact-info-phone', count: 2)
+      expect(rendered).to have_css('.al-repository-contact-phone', count: 2)
     end
 
     context 'collection counts' do
@@ -75,6 +76,7 @@ RSpec.describe 'arclight/repositories/index', type: :view do
       end
     end
   end
+
   context 'switched extra content' do
     it 'shows on repositories page' do
       render
@@ -82,7 +84,7 @@ RSpec.describe 'arclight/repositories/index', type: :view do
     end
 
     it 'does not show on repositories detail page' do
-      assign(:repository, instance_double('repository', name: 'My Repository'))
+      assign(:repository, Arclight::Repository.new(name: 'My Repository'))
       allow(view).to receive(:on_repositories_index?).and_return(false)
       allow(view).to receive(:on_repositories_show?).and_return(true)
       render
@@ -93,19 +95,6 @@ RSpec.describe 'arclight/repositories/index', type: :view do
       allow(view).to receive(:on_repositories_index?).and_return(false)
       render
       expect(rendered).not_to have_css('.al-repository-extra')
-    end
-  end
-  context 'missing data' do
-    it 'handles a missing email' do
-      test_data.first.contact_info = nil
-      render
-      expect(rendered).to have_css('.al-repository-contact-info-contact_info a @href', count: 3, text: /mailto:/)
-    end
-
-    it 'handles a malformed email' do
-      test_data.first.contact_info = 'not-an-email-address'
-      render
-      expect(rendered).to have_css('.al-repository-contact-info-contact_info a @href', count: 3, text: /mailto:/)
     end
   end
 end

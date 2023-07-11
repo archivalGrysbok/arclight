@@ -33,32 +33,16 @@ module Arclight
       end
     end
 
-    def install_blacklight_range_limit
-      generate 'blacklight_range_limit:install'
-    end
-
     def add_custom_routes
       inject_into_file 'config/routes.rb', after: "mount Blacklight::Engine => '/'" do
         "\n    mount Arclight::Engine => '/'\n"
       end
+
+      gsub_file 'config/routes.rb', 'root to: "catalog#index"', 'root to: "arclight/repositories#index"'
     end
 
     def copy_styles
       copy_file 'arclight.scss', 'app/assets/stylesheets/arclight.scss'
-    end
-
-    def inject_js
-      inject_into_file 'app/assets/javascripts/application.js', after: '//= require blacklight/blacklight' do
-        "\n// Required by Arclight" \
-        "\n//= require arclight/arclight" \
-        "\n//= require stickyfill"
-      end
-    end
-
-    def install_webpacker
-      return unless Rails.version.to_i == 6
-
-      rake 'webpacker:install'
     end
 
     def add_arclight_search_behavior
@@ -83,8 +67,55 @@ module Arclight
       gsub_file 'config/locales/blacklight.en.yml', "application_name: 'Blacklight'", "application_name: 'Arclight'"
     end
 
-    def run_yarn
-      run 'yarn add @babel/core @babel/plugin-external-helpers @babel/plugin-transform-modules-umd @babel/preset-env'
+    def assets
+      if using_importmap?
+        pin_javascript_dependencies
+        import_arclight_javascript
+      else
+        install_javascript_dependencies
+      end
+    end
+
+    private
+
+    def root
+      @root ||= Pathname(destination_root)
+    end
+
+    def using_importmap?
+      @using_importmap ||= root.join('config/importmap.rb').exist?
+    end
+
+    # This is the last step because any failure here wouldn't prevent the other steps from running
+    def install_javascript_dependencies
+      inject_into_file 'app/assets/javascripts/application.js', after: '//= require blacklight/blacklight' do
+        "\n// Required by Arclight" \
+          "\n//= require arclight/arclight"
+      end
+    end
+
+    def pin_javascript_dependencies
+      say 'Arclight Importmap asset generation'
+
+      append_to_file 'config/importmap.rb', <<~RUBY
+        pin "jquery", to: "https://ga.jspm.io/npm:jquery@3.6.0/dist/jquery.js"
+        pin "arclight", to: "arclight/arclight.js"
+        # TODO: We may be able to move these to a single importmap for arclight.
+        pin "arclight/collection_navigation", to: "arclight/collection_navigation.js"
+        pin "arclight/context_navigation", to: "arclight/context_navigation.js"
+        pin "arclight/oembed_viewer", to: "arclight/oembed_viewer.js"
+        pin "arclight/truncator", to: "arclight/truncator.js"
+        pin "arclight/responsiveTruncator", to: "arclight/responsiveTruncator.js"
+      RUBY
+    end
+
+    def import_arclight_javascript
+      inject_into_file 'app/javascript/application.js', after: 'import "blacklight"' do
+        "\n  import $ from \"jquery\"\n  " \
+          "window.$ = $ // required by arclight\n  " \
+          "window.jQuery = $ // required by arclight/responsive_truncator.js\n  " \
+          'import "arclight"'
+      end
     end
   end
 end

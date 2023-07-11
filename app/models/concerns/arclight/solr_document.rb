@@ -4,13 +4,22 @@ module Arclight
   ##
   # Extends Blacklight::Solr::Document to provide Arclight specific behavior
   module SolrDocument
-    extend Blacklight::Solr::Document
-    include Arclight::EadFormatHelpers
+    include Blacklight::Solr::Document
 
     def repository_config
       return unless repository
 
       @repository_config ||= Arclight::Repository.find_by(name: repository)
+    end
+
+    def collection
+      return self if collection?
+
+      SolrDocument.find(normalized_eadid)
+    end
+
+    def parents
+      @parents ||= Arclight::Parents.from_solr_document(self).as_parents
     end
 
     def parent_ids
@@ -31,6 +40,10 @@ module Arclight
 
     def eadid
       fetch('ead_ssi', nil)&.strip
+    end
+
+    def normalized_eadid
+      Arclight::NormalizedId.new(eadid).to_s
     end
 
     def unitid
@@ -58,8 +71,7 @@ module Arclight
     end
 
     def abstract_or_scope
-      value = first('abstract_ssm') || first('scopecontent_ssm')
-      render_html_tags(value: [value]) if value.present?
+      first('abstract_ssm') || first('scopecontent_ssm')
     end
 
     def creator
@@ -94,22 +106,22 @@ module Arclight
       first('level_ssm')
     end
 
-    def digital_object_viewer
-      @digital_object_viewer ||= Arclight::Viewer.render(self)
+    def collection?
+      level.parameterize == 'collection'
     end
 
     def terms
-      render_html_tags(value: [first('userestrict_ssm')])
+      first('userestrict_ssm')
     end
 
     # Restrictions for component sidebar
     def parent_restrictions
-      render_html_tags(value: [first('parent_access_restrict_ssm')])
+      first('parent_access_restrict_ssm')
     end
 
     # Terms for component sidebar
     def parent_terms
-      render_html_tags(value: [first('parent_access_terms_ssm')])
+      first('parent_access_terms_ssm')
     end
 
     def digital_objects
@@ -122,7 +134,7 @@ module Arclight
     end
 
     def containers
-      # note that .titlecase strips punctuation, like hyphens, we want to keep
+      # NOTE: that .titlecase strips punctuation, like hyphens, we want to keep
       fetch('containers_ssim', []).map(&:capitalize)
     end
 
@@ -141,13 +153,22 @@ module Arclight
                 highlight_response[id].blank? ||
                 highlight_response[id][:text].blank?
 
-      highlight_response[id][:text]
+      highlight_response[id][:text].map(&:html_safe)
     end
 
     # Factory method for constructing the Object modeling downloads
     # @return [DocumentDownloads]
     def downloads
       @downloads ||= DocumentDownloads.new(self)
+    end
+
+    def ead_file
+      @ead_file ||= begin
+        files = Arclight::DocumentDownloads.new(self, collection_unitid).files
+        files.find do |file|
+          file.type == 'ead'
+        end
+      end
     end
   end
 end

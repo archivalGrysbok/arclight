@@ -1,5 +1,4 @@
-.documents-list,
-.documents-online_contents {
+.documents-list {
   margin-bottom: $spacer;
 
   // Result item header
@@ -28,10 +27,6 @@
       }
     }
 
-    form.bookmark-toggle.col-auto {
-      padding-right: 0;
-    }
-
     .breadcrumb-links,
     .al-document-creator,
     .al-document-extent,
@@ -57,6 +52,10 @@ article.document {
   div.al-document-abstract-or-scope,
   div.al-document-creator {
     margin-top: ($spacer * .5);
+  }
+
+  form.bookmark-toggle.col-auto {
+    padding-right: 0;
   }
 }
 
@@ -97,6 +96,7 @@ article.document {
 
     .al-grouped-more {
       border-bottom: $default-border-styling;
+      margin-bottom: $spacer;
       padding: ($spacer * .5) 0;
     }
 
@@ -197,4 +197,68 @@ article.document {
 
 .btn-outline-secondary:not(:disabled):not(.disabled).active svg, .btn-outline-secondary:hover svg {
   fill: $white;
+}
+
+.sort-pagination {
+  flex-wrap: wrap;
+}
+
+.search-widgets {
+  width: 100%;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+
+.result-type-group {
+  order: -1;
+  flex-grow: 1;
+  &.btn-group>.btn {
+    flex-grow: 0;
+  }
+}
+@include media-breakpoint-down(md) {
+  .result-type-group {
+    margin-bottom: 0.5rem;
+    width: 100%;
+  }
+
+  .search-widgets {
+    justify-content: flex-start;
+  }
+}
+
+.show-document {
+  .al-contents {
+    .breadcrumb-links {
+      display: none;
+    }
+
+    .sort-pagination {
+      margin-bottom: 0;
+    }
+
+    article {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    article:first-child {
+      padding-top: 1rem;
+    }
+
+    article:nth-child(odd) {
+      background-color: $gray-100;
+    }
+
+    .index_title {
+      font-size: 1rem;
+    }
+
+    .bookmark-toggle {
+      display: none;
+    }
+
+  }
 }

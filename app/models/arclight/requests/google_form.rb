@@ -7,10 +7,11 @@ module Arclight
     # query parameters from the form mapping configuratino
     class GoogleForm
       attr_reader :document, :presenter, :document_url
+
       delegate :collection_name, :collection_creator, :eadid, :containers, to: :document
 
       ##
-      # @param [Blacklight::SolrDocument] document
+      # @param [SolrDocument] document
       # @param [Arclight::ShowPresenter] presenter
       # @param [String] document_url
       def initialize(document, presenter, document_url)
@@ -22,7 +23,7 @@ module Arclight
       ##
       # Url of form to fill
       def url
-        document.repository_config&.request_url_for_type('google_form')
+        request_config['request_url']
       end
 
       ##
@@ -32,12 +33,16 @@ module Arclight
       # @return [Hash]
       def form_mapping
         Rack::Utils.parse_nested_query(
-          document.repository_config&.request_mappings_for_type('google_form')
+          request_config['request_mappings']
         )
       end
 
       def title
         presenter.heading
+      end
+
+      def request_config
+        document.repository_config&.request_config_for_type('google_form')
       end
     end
   end
